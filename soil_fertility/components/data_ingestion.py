@@ -56,10 +56,3 @@ class DataIngestion(BaseModel):
         except Exception as e:
             logging.error(f'Exception occured {e}')
             raise e
-
-    
-
-if __name__=="__main__":
-    tester=DataIngestion()
-    tester.init_ingestion('/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/data/Dataset1.csv')
-    tester.init_ingestion('/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/data/Dataset2.csv')
