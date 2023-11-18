@@ -5,8 +5,8 @@
 # Define a variable for the test file path.
 TEST_FILE ?= tests/unit_tests/
 
-tests: 
-	poetry run pytest --disable-socket --allow-unix-socket $(TEST_FILE)
+test: 
+	poetry run pytest $(TEST_FILE)
 
 integration_tests:
 	poetry run pytest tests/integration_tests
