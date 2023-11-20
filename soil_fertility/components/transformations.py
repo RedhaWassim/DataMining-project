@@ -70,6 +70,9 @@ class DropMissingValues(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return self._drop_rows_with_value(X, custom_drop_values=["?"])
 
+    def get_feature_names_out(self):
+        pass
+
 
 class DropDuplicates(BaseEstimator, TransformerMixin):
     def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
@@ -100,6 +103,9 @@ class DropDuplicates(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         return X.drop_duplicates()
+
+    def get_feature_names_out(self):
+        pass
 
 
 class CustomImputer(BaseEstimator, TransformerMixin):
@@ -175,6 +181,9 @@ class CustomImputer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return self.drop_outliers(X)
 
+    def get_feature_names_out(self):
+        pass
+
 
 class MinMaxTransformation(BaseEstimator, TransformerMixin):
     def _tendencies(self, df: pd.DataFrame) -> CalculateTendencies:
@@ -208,6 +217,9 @@ class MinMaxTransformation(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return self._MinMaxTransformer(X)
 
+    def get_feature_names_out(self):
+        pass
+
 
 class ZScoreTransformation(BaseEstimator, TransformerMixin):
     def _tendencies(self, df: pd.DataFrame) -> CalculateTendencies:
@@ -238,3 +250,6 @@ class ZScoreTransformation(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         return self._ZScoreTransformer(X)
+
+    def get_feature_names_out(self):
+        pass
