@@ -253,3 +253,113 @@ class ZScoreTransformation(BaseEstimator, TransformerMixin):
 
     def get_feature_names_out(self):
         pass
+
+
+class EqualFreqDescritizer(BaseEstimator, TransformerMixin):
+    def __init__(self, k: int, columns : List[str]) -> None:
+        self.k = k
+        self.columns= columns
+
+
+    def _assigning_classes_equal_freq(self, df : pd.DataFrame,column : str, k : int) -> List[int]:
+        """ this function assign classes to the dataframe column based on the number of classes k
+
+        Args:
+            df (pd.DataFrame): dataframe to assign classes to
+            column (str): column to assign classes to
+            k (int): number of classes
+
+        Returns:
+            List[int]: list of classes assigned to each row in the dataframe
+        """
+
+        
+        new_df=df.copy()
+        sorted_data = new_df[column]
+        observations_per_class = len(sorted_data) // k
+
+        class_assignments = []
+        current_class = 1
+        current_observations = 0
+
+        for i, _ in enumerate(sorted_data):
+            class_assignments.append(current_class)
+            current_observations += 1
+            if i == len(sorted_data) - 1:
+                break
+            
+            if current_observations == observations_per_class and current_class < k:
+                current_class += 1
+                current_observations = 0
+
+        return class_assignments
+    
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X, y=None, **fit_params):
+        sorted_dataframe = X.sort_values(by=self.columns)
+        
+        for column in self.columns:
+            sorted_dataframe = sorted_dataframe.sort_values(by=column)
+
+            sorted_dataframe[column] = self._assigning_classes_equal_freq(sorted_dataframe,column,self.k)
+        
+        return sorted_dataframe.reset_index(drop=True)
+    
+
+
+class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
+    def __init__(self, k: int, columns : List[str]) -> None:
+        self.k = k
+        self.columns= columns
+
+    def _assigning_classes_equal_width(self, df : pd.DataFrame, column : str, k : int) -> List[int]:
+        """ this function assign classes to the dataframe column based on the number of classes k with equal width
+
+        Args:
+            df (pd.DataFrame): dataframe to assign classes to
+            column (str): column to assign classes to
+            k (int): number of classes
+
+        Returns:
+            List[int]: list of classes assigned to each row in the dataframe
+        """
+
+        new_df=df.copy()
+        sorted_data = new_df[column]
+        range_temperature = sorted_data.max() - sorted_data.min()
+
+        class_width = range_temperature / k
+
+        class_assignments = []
+        current_class = 1
+        current_boundary = sorted_data.min() + class_width
+
+        for observation in sorted_data:
+            if observation > current_boundary:
+                current_class += 1
+                current_boundary += class_width
+
+                if current_boundary > sorted_data.max():
+                    current_boundary = sorted_data.max()
+                    current_class = current_class-1
+
+            class_assignments.append(current_class)
+
+        return class_assignments
+
+
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X, y=None, **fit_params):
+        sorted_dataframe = X.sort_values(by=self.columns)
+        
+        for column in self.columns:
+            sorted_dataframe = sorted_dataframe.sort_values(by=column)
+
+            sorted_dataframe[column]=self._assigning_classes_equal_width(sorted_dataframe,column,self.k)
+        
+        return sorted_dataframe.reset_index(drop=True)
+    

@@ -8,6 +8,8 @@ from soil_fertility.components.transformations import (
     CustomImputer,
     MinMaxTransformation,
     ZScoreTransformation,
+    EqualWidthDescritizer,
+    EqualFreqDescritizer,
 )
 from sklearn.compose import ColumnTransformer
 from soil_fertility.logger import logging
@@ -15,74 +17,36 @@ import pandas as pd
 import os
 
 
-class GeneralProcessing(BaseModel):
-    def generate_transformer(self):
-        all_features_pipeline = Pipeline(
-            [
-                ("drop_missing_values", DropMissingValues()),
-                ("drop_duplicates", DropDuplicates()),
-                ("custom_imputer", CustomImputer()),
-            ]
-        )
-        return all_features_pipeline
-
-    def transform(self, data):
-        try:
-            logging.info("general processing started")
-
-            all_features_pipeline = self.generate_transformer()
-            processed_data = all_features_pipeline.fit_transform(data)
-
-            logging.info("general processing completed")
-
-            return processed_data
-
-        except Exception as e:
-            logging.error(f"Exception occured {e}")
-            raise e
-
-
 class DataTransformationConfig(PathConfig):
     def __init__(self):
         super().__init__()
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
+        self.part = 3
         self.update_path()
 
 
-class DataTransformation(BaseModel):
-    transformation_config: DataTransformationConfig = DataTransformationConfig()
+class DataTransformationThree(BaseModel):
+    transformation_config : DataTransformationConfig = DataTransformationConfig()
 
-    def generate_transformer_first_data(
-        self, numerical_features: List[str], strategie: str = "minmax"
+    def generate_transformer_third_data(
+        self, numerical_features: List[str], strategie: str = "frequency", k : int = 5
     ) -> None:
         try:
-            if strategie == "minmax":
-                numerical_pipeline = Pipeline(
+            if strategie == "frequency":
+                preprocessor = Pipeline(
                     [
-                        ("imputer", MinMaxTransformation()),
+                        ("equal_freq_descritizer", EqualFreqDescritizer(k,columns=numerical_features)),
                     ]
                 )
-                preprocessor = ColumnTransformer(
-                    [
-                        ("numerical", numerical_pipeline, numerical_features),
-                    ]
-                )
-                preprocessor.set_output(transform="pandas")
 
                 return preprocessor
 
-            elif strategie == "zscore":
-                numerical_pipeline = Pipeline(
+            elif strategie == "width":
+                preprocessor = Pipeline(
                     [
-                        ("imputer", ZScoreTransformation(strategy="median")),
+                        ("equal_width_descritizer", EqualWidthDescritizer(k,columns=numerical_features)),
                     ]
                 )
-                preprocessor = ColumnTransformer(
-                    [
-                        ("numerical", numerical_pipeline, numerical_features),
-                    ]
-                )
-                preprocessor.set_output(transform="pandas")
 
                 return preprocessor
             else:
@@ -97,8 +61,10 @@ class DataTransformation(BaseModel):
         self,
         train_path: str,
         test_path: str,
-        target: str,
-        numerical_features: Optional[List[str]] = None,
+        target: Optional[str] = None,
+        k : int = 5,
+        numerical_features : List[str] = ["Temperature"],
+        strategie : Literal["frequency", "width"] = "frequency",
     ):
         try:
             logging.info("reading train and test data")
@@ -113,19 +79,13 @@ class DataTransformation(BaseModel):
 
             logging.info("generating preprocessor object")
 
-            if numerical_features is None:
-                numerical_features = train_df.select_dtypes(
-                    include=["int64", "float64"]
-                ).columns
-                numerical_features = numerical_features.drop(target)
-
-            preprocessors = self.generate_transformer_first_data(
-                numerical_features=numerical_features, strategie="minmax"
+            preprocessors = self.generate_transformer_third_data(
+                numerical_features=numerical_features, strategie=strategie, k=k
             )
 
             logging.info("transforming train data")
             processed_train = preprocessors.fit_transform(train_df)
-            processed_test = preprocessors.transform(test_df)
+            processed_test = preprocessors.fit_transform(test_df)
 
             logging.info("data transformation completed")
 

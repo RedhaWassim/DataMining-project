@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Dict, Literal
 
 import pandas as pd
 from pydantic import BaseModel
@@ -7,17 +7,21 @@ from sklearn.model_selection import train_test_split
 
 from soil_fertility.logger import logging
 from soil_fertility.components.path_config import PathConfig
-from soil_fertility.components.data_transformation import GeneralProcessing
+from soil_fertility.components.data_transformation.data_transformation import GeneralProcessing
 
 
 class DataIngestion(BaseModel):
     ingestion_config: PathConfig = PathConfig()
     general_processing: GeneralProcessing = GeneralProcessing()
 
-    def init_ingestion(self, path: str) -> Dict[str, str | int]:
+    def init_ingestion(self, path: str, option : Literal["csv","xlsx"] = "csv") -> Dict[str, str | int]:
         try:
             logging.info("ingestion started")
-            df = pd.read_csv(path)
+            if option == "csv":
+                df = pd.read_csv(path)
+            elif option == "xlsx":
+                df = pd.read_excel(path)
+            
             logging.info("Raw data read from {path}")
 
             os.makedirs(
