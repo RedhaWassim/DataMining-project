@@ -363,3 +363,48 @@ class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
         
         return sorted_dataframe.reset_index(drop=True)
     
+class DateTimeTransformer(BaseEstimator, TransformerMixin):
+    
+    def _process(self,df : pd.DataFrame) -> pd.DataFrame:
+        """ this function process the date time columns in the dataframe
+
+        Args:
+            df (pd.DataFrame): dataframe to process
+
+        Returns:
+            pd.DataFrame: dataframe with processed date time columns
+        """
+        for i in range(len(df)):
+            for j in range(i,len(df)):
+                if df["time_period"][i] == df["time_period"][j]:
+                    df["Start date"][j] = df["Start date"][i]
+                    df["end date"][j] = df["end date"][i]
+
+        for i in range(len(df)): 
+            try:
+                df['end date'][i] = pd.to_datetime(df['end date'][i] )
+                df['Start date'][i]  = pd.to_datetime(df['Start date'][i] )
+
+            except Exception as e:
+                rows = df[df['time_period']==df['time_period'][i]+1]
+                year = rows["end date"][0].year
+                
+                date = df['Start date'][i].split("-")
+                df['Start date'][i] = pd.to_datetime(str(year)+'-'+date[1]+'-'+date[0],format="%Y-%b-%d")
+                date = df['end date'][i].split("-")
+                df['end date'][i] = pd.to_datetime(str(year)+'-'+date[1]+'-'+date[0],format="%Y-%b-%d")
+
+        df['Start date'] = pd.to_datetime(df['Start date'])
+        df['end date'] = pd.to_datetime(df['end date'])
+
+        return df
+
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X, y=None) -> pd.DataFrame:
+        df=X.copy()
+        processed_df=self._process(df)
+
+        return processed_df
+    

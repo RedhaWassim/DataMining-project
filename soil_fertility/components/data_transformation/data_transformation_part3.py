@@ -50,8 +50,8 @@ class DataTransformationThree(BaseModel):
 
                 return preprocessor
             else:
-                logging.error("strategie must be minmax or zscore")
-                raise ValueError("strategie must be minmax or zscore")
+                logging.error("strategie must be width or frequency")
+                raise ValueError("strategie must be width or frequency")
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
