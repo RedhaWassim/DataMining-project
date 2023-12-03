@@ -71,6 +71,8 @@ class DataTransformationThree(BaseModel):
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
 
+            df=pd.concat([train_df,test_df],axis=0)
+
             os.makedirs(
                 os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
             )
@@ -84,18 +86,14 @@ class DataTransformationThree(BaseModel):
             )
 
             logging.info("transforming train data")
-            processed_train = preprocessors.fit_transform(train_df)
-            processed_test = preprocessors.fit_transform(test_df)
+            processed_df = preprocessors.fit_transform(df)
 
             logging.info("data transformation completed")
 
             logging.info("saving transformed data")
 
-            processed_train.to_csv(
-                self.transformation_config.train_data_path, index=False
-            )
-            processed_test.to_csv(
-                self.transformation_config.test_data_path, index=False
+            processed_df.to_csv(
+                self.transformation_config.raw_data_path, index=False
             )
 
             logging.info("data saved")
@@ -103,8 +101,7 @@ class DataTransformationThree(BaseModel):
             values = ( 
                 self.transformation_config.part,
                 preprocessors,
-                self.transformation_config.train_data_path,
-                self.transformation_config.test_data_path,
+                self.transformation_config.raw_data_path,
             )
 
             self.transformation_config.part += 1

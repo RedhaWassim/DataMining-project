@@ -304,6 +304,11 @@ class EqualFreqDescritizer(BaseEstimator, TransformerMixin):
             sorted_dataframe = sorted_dataframe.sort_values(by=column)
 
             sorted_dataframe[column] = self._assigning_classes_equal_freq(sorted_dataframe,column,self.k)
+
+        for column in self.columns:
+            for i,value in enumerate(sorted_dataframe[column]):
+                sorted_dataframe[column][i] = str(column[0]+str(int(value)))
+        
         
         return sorted_dataframe.reset_index(drop=True)
     
@@ -360,6 +365,10 @@ class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
             sorted_dataframe = sorted_dataframe.sort_values(by=column)
 
             sorted_dataframe[column]=self._assigning_classes_equal_width(sorted_dataframe,column,self.k)
+        
+        for column in self.columns:
+            for i,value in enumerate(sorted_dataframe[column]):
+                sorted_dataframe.at[i,column] = str(column[0]+str(value))
         
         return sorted_dataframe.reset_index(drop=True)
     

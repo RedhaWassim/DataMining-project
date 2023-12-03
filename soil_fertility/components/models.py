@@ -1,35 +1,94 @@
-from typing import Iterable, List
-import pandas as pd
-from collections import defaultdict
 from itertools import combinations
+from collections import Counter
+import pandas as pd
+import math
+class Metrics:
+    def __init__(self, confidence=0, cosine=0, lift=0, all_confidence=0, jaccard=0, kulczynski=0, max_confidence=0):
+        self.confidence = confidence
+        self.cosine = cosine
+        self.lift = lift
+        self.all_confidence = all_confidence
+        self.jaccard = jaccard
+        self.kulczynski = kulczynski
+        self.max_confidence = max_confidence
+
+    @classmethod
+    def from_rules(cls, itemset, antecedent, support, parent):
+        metrics = cls()
+        metrics.calculate_all(itemset, antecedent, support, parent)
+        return metrics
+
+    def calculate_all(self, itemset, antecedent, support, parent):
+        self.confidence = support / parent._get_support(antecedent)
+        self.cosine = self._calculate_cosine(itemset, antecedent, parent)
+        self.lift = self._calculate_lift(itemset, antecedent, parent)
+        self.jaccard = self._calculate_jaccard(itemset, antecedent, parent)
+        self.kulczynski = self._calculate_kulczynski(itemset, antecedent, parent)
+        self.max_confidence = self._calculate_max_confidence(itemset, antecedent, parent)
+        self.all_confidence = self._calculate_all_confidence(itemset, antecedent, parent)
+
+    def _calculate_cosine(self, itemset, antecedent, parent) -> float:
+        return parent._get_support(itemset | antecedent) / math.sqrt(parent._get_support(itemset) * parent._get_support(antecedent))
+
+    def _calculate_lift(self, itemset, antecedent, parent) -> float:
+        confidence = parent._get_support(itemset | antecedent) / parent._get_support(antecedent)
+        return confidence / parent._get_support(itemset)
+
+    def _calculate_jaccard(self, itemset, antecedent, parent) -> float:
+        join_support = parent._get_support(itemset | antecedent)
+        return join_support / (parent._get_support(itemset) + parent._get_support(antecedent) - join_support)
+
+    def _calculate_kulczynski(self, itemset, antecedent, parent) -> float:
+        join_support = parent._get_support(itemset | antecedent)
+        return ((join_support / parent._get_support(itemset)) + (join_support / parent._get_support(antecedent))) / 2
+
+    def _calculate_max_confidence(self, itemset, antecedent, parent) -> float:
+        join_support = parent._get_support(itemset | antecedent)
+        return max(parent._get_support(itemset) / join_support, parent._get_support(antecedent) / join_support)
+
+    def _calculate_all_confidence(self, itemset, antecedent, parent) -> float:
+        return parent._get_support(itemset | antecedent) / max(parent._get_support(itemset), parent._get_support(antecedent))
 
 
-class AssociationRuleMiner:
-    def __init__(self, min_support: int = 4, threshold: float = 1):
+class Rule:
+    def __init__(self, antecedent, consequent, metrics):
+        self.antecedent = antecedent
+        self.consequent = consequent
+        self.metrics = metrics
+
+
+
+
+class MyApriori:
+    def __init__(self, min_support, min_confidence):
+        self.df = None
         self.min_support = min_support
-        if threshold > 1 or threshold < 0:
-            raise ValueError("The threshold must be between 0 and 1")
-        self.threshold = threshold
+        self.min_confidence = min_confidence
+        self.frequent_itemsets = []
+        self.transactions = None
+        self.transaction_columns = None
+        self.items_groups = None
+        self.show = False
+        self.rules = []
 
-    def execute(
-        self, data: str, transactions_groups: List[str], items_groups: List[str]
-    ):
-        self.df = data.copy()
-        self.transaction_columns = transactions_groups
+
+    def fit(self, input_df: pd.DataFrame, transaction_columns: list[str], items_groups: list[str], show : bool = False) -> None:
+        self.frequent_itemsets = []
+        self.df = input_df.copy()
+        self.transaction_columns = transaction_columns
         self.items_groups = items_groups
+        self.show = show
+        self.transactions = self.rearrange_data()
+        self._generate_frequent_items()
+        self._generate_rules()
 
-        transactions = self.rearrange_data()
 
-        frequent_itemsets, k = self.apriori(transactions["Items"])
-
-        generated_rules = self.generate_association_rules(frequent_itemsets[k])
-        self.find_confidence(generated_rules, transactions["Items"])
 
     def rearrange_data(self) -> pd.DataFrame:
-        """this function is responsible for rearranging the data to be in the form of a transactional dataframe
+        """This function is responsible for rearranging the data to be in the form of a transactional dataframe.
 
         Returns:
-            pd.DataFrame: a transactional dataframe
+            pd.DataFrame: A transactional dataframe.
         """
         # Melt the DataFrame to convert it from wide to long format
         melted_df = pd.melt(
@@ -39,23 +98,23 @@ class AssociationRuleMiner:
         # Drop rows with NaN values (assuming NaNs are not valid items in your context)
         melted_df = melted_df.dropna()
 
-        # Group by the transaction column and aggregate items into a set
+        # Group by all transaction columns and aggregate items into a set
         result_df = (
-            melted_df.groupby(self.transaction_columns[0])
+            melted_df.groupby(self.transaction_columns)
             .agg({"value": lambda x: set(x)})
             .sort_values(by="value", key=lambda x: x.apply(len), ascending=False)
             .rename(
                 columns={
-                    self.transaction_columns[0]: "Transaction",
+                    tuple(self.transaction_columns): "Transaction",
                     "value": "Items",
                 }
             )
         )
 
         return result_df
-
-    def generate_items(self, transactions: pd.Series) -> set:
-        """this function is responsible for generating the unique items from the transactions
+    
+    def _generate_frequent_items(self) :
+        """this function is responsible for generating the items from the transactions
 
         Args:
             transactions (pd.Series): a list of transactions
@@ -63,162 +122,250 @@ class AssociationRuleMiner:
         Returns:
             set: a set containing the unique items
         """
-        # generate the unique items from the transactions
-        items = set()
-        for transaction in transactions:
-            items.update(transaction)
-        return items
+        self._generate_one_itemset()
+        
+        if self.show:
+            print("L1", self.frequent_itemsets[0])
+            print('\n')
 
-    def generate_candidates(self, items, k) -> list[set]:
-        """this function is responsible for generating the candidates from the items
-
-        Args:
-            items (_type_): a list of items
-            k (_type_): a number representing the cardinality of the candidates
-
-        Returns:
-            list[set]: a list of candidates
-        """
-        # generate the candidates from the items
-        # the candidates are the combinations of the items
-        result = []
-        for combination in combinations(items, k):
-            result.append(set(combination))
-        return result
-
-    def support(self, transactions: Iterable[set], candidate: set) -> int:
-        """this function is responsible for calculating the support of a candidate
-
-        Args:
-            transactions (Iterable[set]): a list of transactions
-            candidate (set): a candidate
-
-        Returns:
-            int : the support of the candidate
-        """
-        # calculate the support of a candidate
-        count = 0
-        for transaction in transactions:
-            if candidate.issubset(transaction):
-                count += 1
-        return count
-
-    def select_adequat_candidats(
-        self, transactions: Iterable[set], candidates: list[set]
-    ) -> dict[dict, int]:
-        """this function is responsible for selecting the candidates that have a support greater than the minimum support
-
-        Args:
-            transactions (Iterable[set]): a list of transactions
-            candidates (list[set]): a list of candidates
-
-        Returns:
-            dict[dict, int]: a dictionary containing the candidates and their support
-        """
-        # select the candidates that have a support greater than the minimum support
-        candidat_support = defaultdict(int)
-        for transaction in transactions:
-            for candidat in candidates:
-                # if the candidate is a subset of the transaction
-                if set(candidat).issubset(transaction):
-                    # increment the support of the candidate
-                    candidat_support[tuple(candidat)] += 1
-        return {
-            candidat: support
-            for candidat, support in candidat_support.items()
-            if support >= self.min_support
-        }
-
-    def apriori(self, transactions: Iterable[set]) -> tuple[dict[int, set], int]:
-        """this function is responsible for generating the frequent itemsets from the transactions
-
-        Args:
-            transactions (Iterable[set]): a list of transactions
-
-        Returns:
-            tuple[dict[int, set], int]: a tuple containing the frequent itemsets and the maximum k
-        """
-        items = self.generate_items(transactions)
-        candidates = self.generate_candidates(items, 1)
-        candidats_support = self.select_adequat_candidats(transactions, candidates)
-        if not candidats_support:
-            # if there is no candidate with a support greater than the minimum support return an empty set
-            return {1: set()}, 1
-
-        # generate the items from the support counts
-        items = self.generate_items(candidats_support)
-
-        k = 2
-        frequent_itemsets = {}
-
+        k=2
         while True:
-            # generate the candidates
-            candidates = self.generate_candidates(items, k)
-            # if there is no candidate break the loop
-            if not candidates:
+            frequent_items = self._generate_candidates(k)
+            if not frequent_items:
                 break
-            print("C", k, "=", candidates)
 
-            # select the candidates that have a support greater than the minimum support
-            candidats_support = self.select_adequat_candidats(transactions, candidates)
-            # if there is no candidate break the loop
-            if not candidats_support:
-                break
-            print("L", k, "=", candidats_support)
-            # generate the items from the support counts
-            items = self.generate_items(candidats_support)
-            frequent_itemsets[k] = items
+            if self.show:
+                print(f"L{k}", frequent_items)
+                print('\n')
+
+            self.frequent_itemsets.append(frequent_items)
             k += 1
 
-        return frequent_itemsets, k - 1
+    def _generate_one_itemset(self):
+        """Generate the first item set containing unique items."""
 
-    def generate_association_rules(
-        self, frequent_itemsets: set
-    ) -> defaultdict[frozenset, set]:
-        """this function is responsible for generating the association rules from the frequent itemsets
+        self.item_counts = Counter()
+
+        for itemset in self.transactions['Items']:
+            self.item_counts.update(itemset)
+
+        n = len(self.transactions)
+
+        frequent_itemsets = [
+            (frozenset([item]), support / n)
+            for item, support in self.item_counts.items()
+            if support / n >= self.min_support
+        ]
+
+        self.frequent_itemsets.append(frequent_itemsets)
+
+
+    
+    def _generate_candidates(self, k):
+        itemsets = self.frequent_itemsets[k - 2]
+        frequent_itemsets = []
+
+        for i, (itemset1, _) in enumerate(itemsets):
+            for _, (itemset2, _) in enumerate(itemsets[i + 1:]):
+                union = itemset1 | itemset2
+
+                if len(union) == k and union not in (itemset for itemset, _ in frequent_itemsets):
+                    support = self._get_support(union)
+
+                    if support >= self.min_support:
+                        frequent_itemsets.append((union, support))
+
+        return frequent_itemsets
+
+    
+    def _get_support(self, itemset : set) -> float:
+        """This function is responsible for calculating the support of an itemset
 
         Args:
-            frequent_itemsets (set): a set containing the frequent itemsets
+            itemset (set): the itemset
 
         Returns:
-            defaultdict[frozenset, set]: a dictionary containing the association rules
+            float: the support of the itemset
         """
-        max_k = len(frequent_itemsets)
-        rules = defaultdict(set)
+        count = 0
+        total_transactions = len(self.transactions)
+        
+        for itemset2 in self.transactions['Items']:
+            if itemset.issubset(itemset2):
+                count += 1
+        
+        support = count / total_transactions
+        
+        return support
+    
+    def _generate_rules(self):
+        """This function is responsible for generating the rules from the frequent itemsets.
+        """
+        self.rules = []
+        
+        for itemset in self.frequent_itemsets:
+            for item, support in itemset:
+                if len(itemset) < 2:
+                    continue
+                self._generate_rules_from_itemset(item, support)
 
-        for k in range(1, max_k):
-            transactions = list(combinations(frequent_itemsets, k))
-            for j in range(1, max_k):
-                candidates_transaction = list(combinations(frequent_itemsets, j))
-                for translation in transactions:
-                    for candidate in candidates_transaction:
-                        if not set(candidate).issubset(translation):
-                            rules[frozenset(translation)].add(candidate)
-        return rules
-
-    def find_confidence(
-        self, rules: dict[frozenset, set], transactions: Iterable[set]
-    ) -> None:
-        """this function is responsible for finding the confidence of the association rules
+    def _generate_rules_from_itemset(self,itemset : set, support : float):
+        """This function is responsible for generating the rules from an itemset.
 
         Args:
-            rules (dict[frozenset, set]): a dictionary containing the association rules
-            transactions (Iterable[set]): a list of transactions
-            threshold (float, optional): the threshold if the confidence  . Defaults to 0.5.
+            item (set): the itemset
+            support (float): the support of the itemset
         """
-        # for each transaction in the rules
-        for transaction, candidates in rules.items():
-            # for each candidate in the transaction
-            for candidate in candidates:
-                # calculate the confidence of the candidate
-                # the confidence is the support of the union of the candidate and the transaction divided by the support of the transaction
-                try:
-                    union = transaction.union(candidate)
-                    confidence = self.support(transactions, union) / self.support(
-                        transactions, transaction
-                    )
-                    # if the confidence is greater than the threshold print the association rule
-                    if confidence >= self.threshold:
-                        print(f"{list(transaction)} => {candidate} : {confidence:.2f}")
-                except Exception as e:
-                    pass
+
+        for antecedent in self._get_antecedents(itemset):
+            antecedent_support = self._get_support(antecedent)
+            if support / antecedent_support >= self.min_confidence:
+                if self.show:
+                    print(f"{antecedent} => {itemset - antecedent} (Conf: {support / antecedent_support:.2f}, Supp: {support:.2f})")
+                self.rules.append((antecedent, itemset - antecedent, support / antecedent_support))
+
+        
+    def _get_antecedents(self,itemset: set) -> list[tuple]:
+        antecedents = []
+
+        for i in range(1, len(itemset)):
+            current_antecedents = combinations(itemset, i)
+            current_antecedents = {frozenset(antecedent) for antecedent in current_antecedents}
+            antecedents.extend(current_antecedents)
+
+        return antecedents
+
+
+    def _generate_rules_from_itemset(self, itemset: set, support: float):
+        """Generate rules from an itemset.
+
+        Args:
+            itemset (set): the itemset
+            support (float): the support of the itemset
+        """
+
+        for antecedent in self._get_antecedents(itemset):
+            antecedent_support = self._get_support(antecedent)
+
+            metrics = Metrics.from_rules(itemset, antecedent, support, self)
+
+            if metrics.confidence >= self.min_confidence:
+                rule = Rule(antecedent, itemset - antecedent, metrics)
+
+                if self.show:
+                    print(f"{antecedent} => {itemset - antecedent} {metrics.confidence} (Supp: {support:.2f})")
+
+                self.rules.append(rule)
+
+    def get_rules(self, metric='confidence') -> pd.DataFrame:
+        """This function is responsible for generating the strong rules from the rules.
+
+        Args:
+            metric (str): The metric to use for sorting rules (default: 'confidence').
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the strong rules.
+        """
+        sorting_functions = {
+            'confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.confidence, reverse=True),
+            'cosine': lambda: sorted(self.rules, key=lambda x: x.metrics.cosine, reverse=True),
+            'lift': lambda: sorted(self.rules, key=lambda x: x.metrics.lift, reverse=True),
+            'all_confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.all_confidence, reverse=True),
+            'jaccard': lambda: sorted(self.rules, key=lambda x: x.metrics.jaccard, reverse=True),
+            'kulczynski': lambda: sorted(self.rules, key=lambda x: x.metrics.kulczynski, reverse=True),
+            'max_confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.max_confidence, reverse=True),
+        }
+
+        if metric in sorting_functions:
+            sorted_rules = sorting_functions[metric]()
+            rule_data = [(rule.antecedent, rule.consequent, rule.metrics.confidence, rule.metrics.cosine,
+                          rule.metrics.lift, rule.metrics.all_confidence, rule.metrics.jaccard,
+                          rule.metrics.kulczynski, rule.metrics.max_confidence) for rule in sorted_rules]
+            columns = ['Antecedent', 'Consequent', 'Confidence', 'Cosine', 'Lift', 'All Confidence', 'Jaccard', 'Kulczynski', 'Max Confidence']
+            strong_rules_df = pd.DataFrame(rule_data, columns=columns)
+            return strong_rules_df
+        else:
+            raise ValueError(f'metric should be one of {", ".join(sorting_functions.keys())}')
+        
+    def predict(self, items: list[str], metric='confidence'):
+        """Predicts the consequents based on the provided items using the specified metric.
+
+        Args:
+            items (list[str]): The list of items.
+            metric (str): The metric to use for prediction (default: 'confidence').
+
+        Returns:
+            List[Tuple[set, float]]: A list of predictions containing consequent sets and their corresponding metric values.
+        """
+        prediction_functions = {
+            'confidence': self._predict_confidence,
+            'cosine': self._predict_cosine,
+            'lift': self._predict_lift,
+            'all_confidence': self._predict_all_confidence,
+            'jaccard': self._predict_jaccard,
+            'kulczynski': self._predict_kulczynski,
+            'max_confidence': self._predict_max_confidence,
+        }
+
+        if metric in prediction_functions:
+            return prediction_functions[metric](items)
+        else:
+            raise ValueError(f'metric should be one of {", ".join(prediction_functions.keys())}')
+
+    def _predict_confidence(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.confidence))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_cosine(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.cosine))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_lift(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.lift))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_all_confidence(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.all_confidence))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_jaccard(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.jaccard))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_kulczynski(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.kulczynski))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+    def _predict_max_confidence(self, items: list[str]):
+        items = set(items)
+        predictions = []
+        for rule in self.rules:
+            if rule.antecedent == items:
+                predictions.append((rule.consequent, rule.metrics.max_confidence))
+        return sorted(predictions, key=lambda x: x[1], reverse=True)
+
+
