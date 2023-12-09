@@ -71,6 +71,23 @@ class MyApriori:
         self.show = False
         self.rules = []
 
+    def reset(self):
+        self.df = None
+        self.frequent_itemsets = []
+        self.transactions = None
+        self.transaction_columns = None
+        self.items_groups = None
+        self.show = False
+        self.rules = []
+
+
+    def set_parameters(self, min_support, min_confidence):
+        
+        self.reset()
+        self.min_support = min_support
+        self.min_confidence = min_confidence
+
+
 
     def fit(self, input_df: pd.DataFrame, transaction_columns: list[str], items_groups: list[str], show : bool = False) -> None:
         self.frequent_itemsets = []
