@@ -256,13 +256,14 @@ class ZScoreTransformation(BaseEstimator, TransformerMixin):
 
 
 class EqualFreqDescritizer(BaseEstimator, TransformerMixin):
-    def __init__(self, k: int, columns : List[str]) -> None:
+    def __init__(self, k: int, columns: List[str]) -> None:
         self.k = k
-        self.columns= columns
+        self.columns = columns
 
-
-    def _assigning_classes_equal_freq(self, df : pd.DataFrame,column : str, k : int) -> List[int]:
-        """ this function assign classes to the dataframe column based on the number of classes k
+    def _assigning_classes_equal_freq(
+        self, df: pd.DataFrame, column: str, k: int
+    ) -> List[int]:
+        """this function assign classes to the dataframe column based on the number of classes k
 
         Args:
             df (pd.DataFrame): dataframe to assign classes to
@@ -273,8 +274,7 @@ class EqualFreqDescritizer(BaseEstimator, TransformerMixin):
             List[int]: list of classes assigned to each row in the dataframe
         """
 
-        
-        new_df=df.copy()
+        new_df = df.copy()
         sorted_data = new_df[column]
         observations_per_class = len(sorted_data) // k
 
@@ -287,41 +287,42 @@ class EqualFreqDescritizer(BaseEstimator, TransformerMixin):
             current_observations += 1
             if i == len(sorted_data) - 1:
                 break
-            
+
             if current_observations == observations_per_class and current_class < k:
                 current_class += 1
                 current_observations = 0
 
-        word=column[0]
-        for i,value in enumerate(class_assignments):
-            class_assignments[i] = str(word+str(value))
+        word = column[0]
+        for i, value in enumerate(class_assignments):
+            class_assignments[i] = str(word + str(value))
 
         return class_assignments
-    
+
     def fit(self, X, y=None):
         return self
-    
+
     def transform(self, X, y=None, **fit_params):
         sorted_dataframe = X.sort_values(by=self.columns)
-        
+
         for column in self.columns:
             sorted_dataframe = sorted_dataframe.sort_values(by=column)
 
-            sorted_dataframe[column] = self._assigning_classes_equal_freq(sorted_dataframe,column,self.k)
+            sorted_dataframe[column] = self._assigning_classes_equal_freq(
+                sorted_dataframe, column, self.k
+            )
 
-        
-        
         return sorted_dataframe.reset_index(drop=True)
-    
 
 
 class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
-    def __init__(self, k: int, columns : List[str]) -> None:
+    def __init__(self, k: int, columns: List[str]) -> None:
         self.k = k
-        self.columns= columns
+        self.columns = columns
 
-    def _assigning_classes_equal_width(self, df : pd.DataFrame, column : str, k : int) -> List[int]:
-        """ this function assign classes to the dataframe column based on the number of classes k with equal width
+    def _assigning_classes_equal_width(
+        self, df: pd.DataFrame, column: str, k: int
+    ) -> List[int]:
+        """this function assign classes to the dataframe column based on the number of classes k with equal width
 
         Args:
             df (pd.DataFrame): dataframe to assign classes to
@@ -332,7 +333,7 @@ class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
             List[int]: list of classes assigned to each row in the dataframe
         """
 
-        new_df=df.copy()
+        new_df = df.copy()
         sorted_data = new_df[column]
         range_temperature = sorted_data.max() - sorted_data.min()
 
@@ -349,34 +350,35 @@ class EqualWidthDescritizer(BaseEstimator, TransformerMixin):
 
                 if current_boundary > sorted_data.max():
                     current_boundary = sorted_data.max()
-                    current_class = current_class-1
+                    current_class = current_class - 1
 
             class_assignments.append(current_class)
 
-        word=column[0]
-        for i,value in enumerate(class_assignments):
-            class_assignments[i] = str(word+str(value))
+        word = column[0]
+        for i, value in enumerate(class_assignments):
+            class_assignments[i] = str(word + str(value))
 
         return class_assignments
 
-
     def fit(self, X, y=None):
         return self
-    
+
     def transform(self, X, y=None, **fit_params):
         sorted_dataframe = X.sort_values(by=self.columns)
-        
+
         for column in self.columns:
             sorted_dataframe = sorted_dataframe.sort_values(by=column)
 
-            sorted_dataframe[column]=self._assigning_classes_equal_width(sorted_dataframe,column,self.k)
-        
+            sorted_dataframe[column] = self._assigning_classes_equal_width(
+                sorted_dataframe, column, self.k
+            )
+
         return sorted_dataframe.reset_index(drop=True)
-    
+
+
 class DateTimeTransformer(BaseEstimator, TransformerMixin):
-    
-    def _process(self,df : pd.DataFrame) -> pd.DataFrame:
-        """ this function process the date time columns in the dataframe
+    def _process(self, df: pd.DataFrame) -> pd.DataFrame:
+        """this function process the date time columns in the dataframe
 
         Args:
             df (pd.DataFrame): dataframe to process
@@ -385,36 +387,39 @@ class DateTimeTransformer(BaseEstimator, TransformerMixin):
             pd.DataFrame: dataframe with processed date time columns
         """
         for i in range(len(df)):
-            for j in range(i,len(df)):
+            for j in range(i, len(df)):
                 if df["time_period"][i] == df["time_period"][j]:
                     df["Start date"][j] = df["Start date"][i]
                     df["end date"][j] = df["end date"][i]
 
-        for i in range(len(df)): 
+        for i in range(len(df)):
             try:
-                df['end date'][i] = pd.to_datetime(df['end date'][i] )
-                df['Start date'][i]  = pd.to_datetime(df['Start date'][i] )
+                df["end date"][i] = pd.to_datetime(df["end date"][i])
+                df["Start date"][i] = pd.to_datetime(df["Start date"][i])
 
             except Exception as e:
-                rows = df[df['time_period']==df['time_period'][i]+1]
+                rows = df[df["time_period"] == df["time_period"][i] + 1]
                 year = rows["end date"][0].year
-                
-                date = df['Start date'][i].split("-")
-                df['Start date'][i] = pd.to_datetime(str(year)+'-'+date[1]+'-'+date[0],format="%Y-%b-%d")
-                date = df['end date'][i].split("-")
-                df['end date'][i] = pd.to_datetime(str(year)+'-'+date[1]+'-'+date[0],format="%Y-%b-%d")
 
-        df['Start date'] = pd.to_datetime(df['Start date'])
-        df['end date'] = pd.to_datetime(df['end date'])
+                date = df["Start date"][i].split("-")
+                df["Start date"][i] = pd.to_datetime(
+                    str(year) + "-" + date[1] + "-" + date[0], format="%Y-%b-%d"
+                )
+                date = df["end date"][i].split("-")
+                df["end date"][i] = pd.to_datetime(
+                    str(year) + "-" + date[1] + "-" + date[0], format="%Y-%b-%d"
+                )
+
+        df["Start date"] = pd.to_datetime(df["Start date"])
+        df["end date"] = pd.to_datetime(df["end date"])
 
         return df
 
     def fit(self, X, y=None):
         return self
-    
+
     def transform(self, X, y=None) -> pd.DataFrame:
-        df=X.copy()
-        processed_df=self._process(df)
+        df = X.copy()
+        processed_df = self._process(df)
 
         return processed_df
-    

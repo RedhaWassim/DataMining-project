@@ -2,8 +2,19 @@ from itertools import combinations
 from collections import Counter
 import pandas as pd
 import math
+
+
 class Metrics:
-    def __init__(self, confidence=0, cosine=0, lift=0, all_confidence=0, jaccard=0, kulczynski=0, max_confidence=0):
+    def __init__(
+        self,
+        confidence=0,
+        cosine=0,
+        lift=0,
+        all_confidence=0,
+        jaccard=0,
+        kulczynski=0,
+        max_confidence=0,
+    ):
         self.confidence = confidence
         self.cosine = cosine
         self.lift = lift
@@ -24,30 +35,50 @@ class Metrics:
         self.lift = self._calculate_lift(itemset, antecedent, parent)
         self.jaccard = self._calculate_jaccard(itemset, antecedent, parent)
         self.kulczynski = self._calculate_kulczynski(itemset, antecedent, parent)
-        self.max_confidence = self._calculate_max_confidence(itemset, antecedent, parent)
-        self.all_confidence = self._calculate_all_confidence(itemset, antecedent, parent)
+        self.max_confidence = self._calculate_max_confidence(
+            itemset, antecedent, parent
+        )
+        self.all_confidence = self._calculate_all_confidence(
+            itemset, antecedent, parent
+        )
 
     def _calculate_cosine(self, itemset, antecedent, parent) -> float:
-        return parent._get_support(itemset | antecedent) / math.sqrt(parent._get_support(itemset) * parent._get_support(antecedent))
+        return parent._get_support(itemset | antecedent) / math.sqrt(
+            parent._get_support(itemset) * parent._get_support(antecedent)
+        )
 
     def _calculate_lift(self, itemset, antecedent, parent) -> float:
-        confidence = parent._get_support(itemset | antecedent) / parent._get_support(antecedent)
+        confidence = parent._get_support(itemset | antecedent) / parent._get_support(
+            antecedent
+        )
         return confidence / parent._get_support(itemset)
 
     def _calculate_jaccard(self, itemset, antecedent, parent) -> float:
         join_support = parent._get_support(itemset | antecedent)
-        return join_support / (parent._get_support(itemset) + parent._get_support(antecedent) - join_support)
+        return join_support / (
+            parent._get_support(itemset)
+            + parent._get_support(antecedent)
+            - join_support
+        )
 
     def _calculate_kulczynski(self, itemset, antecedent, parent) -> float:
         join_support = parent._get_support(itemset | antecedent)
-        return ((join_support / parent._get_support(itemset)) + (join_support / parent._get_support(antecedent))) / 2
+        return (
+            (join_support / parent._get_support(itemset))
+            + (join_support / parent._get_support(antecedent))
+        ) / 2
 
     def _calculate_max_confidence(self, itemset, antecedent, parent) -> float:
         join_support = parent._get_support(itemset | antecedent)
-        return max(parent._get_support(itemset) / join_support, parent._get_support(antecedent) / join_support)
+        return max(
+            parent._get_support(itemset) / join_support,
+            parent._get_support(antecedent) / join_support,
+        )
 
     def _calculate_all_confidence(self, itemset, antecedent, parent) -> float:
-        return parent._get_support(itemset | antecedent) / max(parent._get_support(itemset), parent._get_support(antecedent))
+        return parent._get_support(itemset | antecedent) / max(
+            parent._get_support(itemset), parent._get_support(antecedent)
+        )
 
 
 class Rule:
@@ -55,8 +86,6 @@ class Rule:
         self.antecedent = antecedent
         self.consequent = consequent
         self.metrics = metrics
-
-
 
 
 class MyApriori:
@@ -80,16 +109,18 @@ class MyApriori:
         self.show = False
         self.rules = []
 
-
     def set_parameters(self, min_support, min_confidence):
-        
         self.reset()
         self.min_support = min_support
         self.min_confidence = min_confidence
 
-
-
-    def fit(self, input_df: pd.DataFrame, transaction_columns: list[str], items_groups: list[str], show : bool = False) -> None:
+    def fit(
+        self,
+        input_df: pd.DataFrame,
+        transaction_columns: list[str],
+        items_groups: list[str],
+        show: bool = False,
+    ) -> None:
         self.frequent_itemsets = []
         self.df = input_df.copy()
         self.transaction_columns = transaction_columns
@@ -98,8 +129,6 @@ class MyApriori:
         self.transactions = self.rearrange_data()
         self._generate_frequent_items()
         self._generate_rules()
-
-
 
     def rearrange_data(self) -> pd.DataFrame:
         """This function is responsible for rearranging the data to be in the form of a transactional dataframe.
@@ -129,8 +158,8 @@ class MyApriori:
         )
 
         return result_df
-    
-    def _generate_frequent_items(self) :
+
+    def _generate_frequent_items(self):
         """this function is responsible for generating the items from the transactions
 
         Args:
@@ -140,12 +169,12 @@ class MyApriori:
             set: a set containing the unique items
         """
         self._generate_one_itemset()
-        
+
         if self.show:
             print("L1", self.frequent_itemsets[0])
-            print('\n')
+            print("\n")
 
-        k=2
+        k = 2
         while True:
             frequent_items = self._generate_candidates(k)
             if not frequent_items:
@@ -153,7 +182,7 @@ class MyApriori:
 
             if self.show:
                 print(f"L{k}", frequent_items)
-                print('\n')
+                print("\n")
 
             self.frequent_itemsets.append(frequent_items)
             k += 1
@@ -163,7 +192,7 @@ class MyApriori:
 
         self.item_counts = Counter()
 
-        for itemset in self.transactions['Items']:
+        for itemset in self.transactions["Items"]:
             self.item_counts.update(itemset)
 
         n = len(self.transactions)
@@ -176,17 +205,17 @@ class MyApriori:
 
         self.frequent_itemsets.append(frequent_itemsets)
 
-
-    
     def _generate_candidates(self, k):
         itemsets = self.frequent_itemsets[k - 2]
         frequent_itemsets = []
 
         for i, (itemset1, _) in enumerate(itemsets):
-            for _, (itemset2, _) in enumerate(itemsets[i + 1:]):
+            for _, (itemset2, _) in enumerate(itemsets[i + 1 :]):
                 union = itemset1 | itemset2
 
-                if len(union) == k and union not in (itemset for itemset, _ in frequent_itemsets):
+                if len(union) == k and union not in (
+                    itemset for itemset, _ in frequent_itemsets
+                ):
                     support = self._get_support(union)
 
                     if support >= self.min_support:
@@ -194,8 +223,7 @@ class MyApriori:
 
         return frequent_itemsets
 
-    
-    def _get_support(self, itemset : set) -> float:
+    def _get_support(self, itemset: set) -> float:
         """This function is responsible for calculating the support of an itemset
 
         Args:
@@ -206,27 +234,26 @@ class MyApriori:
         """
         count = 0
         total_transactions = len(self.transactions)
-        
-        for itemset2 in self.transactions['Items']:
+
+        for itemset2 in self.transactions["Items"]:
             if itemset.issubset(itemset2):
                 count += 1
-        
+
         support = count / total_transactions
-        
+
         return support
-    
+
     def _generate_rules(self):
-        """This function is responsible for generating the rules from the frequent itemsets.
-        """
+        """This function is responsible for generating the rules from the frequent itemsets."""
         self.rules = []
-        
+
         for itemset in self.frequent_itemsets:
             for item, support in itemset:
                 if len(itemset) < 2:
                     continue
                 self._generate_rules_from_itemset(item, support)
 
-    def _generate_rules_from_itemset(self,itemset : set, support : float):
+    def _generate_rules_from_itemset(self, itemset: set, support: float):
         """This function is responsible for generating the rules from an itemset.
 
         Args:
@@ -238,20 +265,24 @@ class MyApriori:
             antecedent_support = self._get_support(antecedent)
             if support / antecedent_support >= self.min_confidence:
                 if self.show:
-                    print(f"{antecedent} => {itemset - antecedent} (Conf: {support / antecedent_support:.2f}, Supp: {support:.2f})")
-                self.rules.append((antecedent, itemset - antecedent, support / antecedent_support))
+                    print(
+                        f"{antecedent} => {itemset - antecedent} (Conf: {support / antecedent_support:.2f}, Supp: {support:.2f})"
+                    )
+                self.rules.append(
+                    (antecedent, itemset - antecedent, support / antecedent_support)
+                )
 
-        
-    def _get_antecedents(self,itemset: set) -> list[tuple]:
+    def _get_antecedents(self, itemset: set) -> list[tuple]:
         antecedents = []
 
         for i in range(1, len(itemset)):
             current_antecedents = combinations(itemset, i)
-            current_antecedents = {frozenset(antecedent) for antecedent in current_antecedents}
+            current_antecedents = {
+                frozenset(antecedent) for antecedent in current_antecedents
+            }
             antecedents.extend(current_antecedents)
 
         return antecedents
-
 
     def _generate_rules_from_itemset(self, itemset: set, support: float):
         """Generate rules from an itemset.
@@ -270,11 +301,13 @@ class MyApriori:
                 rule = Rule(antecedent, itemset - antecedent, metrics)
 
                 if self.show:
-                    print(f"{antecedent} => {itemset - antecedent} {metrics.confidence} (Supp: {support:.2f})")
+                    print(
+                        f"{antecedent} => {itemset - antecedent} {metrics.confidence} (Supp: {support:.2f})"
+                    )
 
                 self.rules.append(rule)
 
-    def get_rules(self, metric='confidence') -> pd.DataFrame:
+    def get_rules(self, metric="confidence") -> pd.DataFrame:
         """This function is responsible for generating the strong rules from the rules.
 
         Args:
@@ -284,27 +317,64 @@ class MyApriori:
             pd.DataFrame: A DataFrame containing the strong rules.
         """
         sorting_functions = {
-            'confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.confidence, reverse=True),
-            'cosine': lambda: sorted(self.rules, key=lambda x: x.metrics.cosine, reverse=True),
-            'lift': lambda: sorted(self.rules, key=lambda x: x.metrics.lift, reverse=True),
-            'all_confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.all_confidence, reverse=True),
-            'jaccard': lambda: sorted(self.rules, key=lambda x: x.metrics.jaccard, reverse=True),
-            'kulczynski': lambda: sorted(self.rules, key=lambda x: x.metrics.kulczynski, reverse=True),
-            'max_confidence': lambda: sorted(self.rules, key=lambda x: x.metrics.max_confidence, reverse=True),
+            "confidence": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.confidence, reverse=True
+            ),
+            "cosine": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.cosine, reverse=True
+            ),
+            "lift": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.lift, reverse=True
+            ),
+            "all_confidence": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.all_confidence, reverse=True
+            ),
+            "jaccard": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.jaccard, reverse=True
+            ),
+            "kulczynski": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.kulczynski, reverse=True
+            ),
+            "max_confidence": lambda: sorted(
+                self.rules, key=lambda x: x.metrics.max_confidence, reverse=True
+            ),
         }
 
         if metric in sorting_functions:
             sorted_rules = sorting_functions[metric]()
-            rule_data = [(rule.antecedent, rule.consequent, rule.metrics.confidence, rule.metrics.cosine,
-                          rule.metrics.lift, rule.metrics.all_confidence, rule.metrics.jaccard,
-                          rule.metrics.kulczynski, rule.metrics.max_confidence) for rule in sorted_rules]
-            columns = ['Antecedent', 'Consequent', 'Confidence', 'Cosine', 'Lift', 'All Confidence', 'Jaccard', 'Kulczynski', 'Max Confidence']
+            rule_data = [
+                (
+                    rule.antecedent,
+                    rule.consequent,
+                    rule.metrics.confidence,
+                    rule.metrics.cosine,
+                    rule.metrics.lift,
+                    rule.metrics.all_confidence,
+                    rule.metrics.jaccard,
+                    rule.metrics.kulczynski,
+                    rule.metrics.max_confidence,
+                )
+                for rule in sorted_rules
+            ]
+            columns = [
+                "Antecedent",
+                "Consequent",
+                "Confidence",
+                "Cosine",
+                "Lift",
+                "All Confidence",
+                "Jaccard",
+                "Kulczynski",
+                "Max Confidence",
+            ]
             strong_rules_df = pd.DataFrame(rule_data, columns=columns)
             return strong_rules_df
         else:
-            raise ValueError(f'metric should be one of {", ".join(sorting_functions.keys())}')
-        
-    def predict(self, items: list[str], metric='confidence'):
+            raise ValueError(
+                f'metric should be one of {", ".join(sorting_functions.keys())}'
+            )
+
+    def predict(self, items: list[str], metric="confidence"):
         """Predicts the consequents based on the provided items using the specified metric.
 
         Args:
@@ -315,19 +385,21 @@ class MyApriori:
             List[Tuple[set, float]]: A list of predictions containing consequent sets and their corresponding metric values.
         """
         prediction_functions = {
-            'confidence': self._predict_confidence,
-            'cosine': self._predict_cosine,
-            'lift': self._predict_lift,
-            'all_confidence': self._predict_all_confidence,
-            'jaccard': self._predict_jaccard,
-            'kulczynski': self._predict_kulczynski,
-            'max_confidence': self._predict_max_confidence,
+            "confidence": self._predict_confidence,
+            "cosine": self._predict_cosine,
+            "lift": self._predict_lift,
+            "all_confidence": self._predict_all_confidence,
+            "jaccard": self._predict_jaccard,
+            "kulczynski": self._predict_kulczynski,
+            "max_confidence": self._predict_max_confidence,
         }
 
         if metric in prediction_functions:
             return prediction_functions[metric](items)
         else:
-            raise ValueError(f'metric should be one of {", ".join(prediction_functions.keys())}')
+            raise ValueError(
+                f'metric should be one of {", ".join(prediction_functions.keys())}'
+            )
 
     def _predict_confidence(self, items: list[str]):
         items = set(items)
@@ -384,5 +456,3 @@ class MyApriori:
             if rule.antecedent == items:
                 predictions.append((rule.consequent, rule.metrics.max_confidence))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
-
-

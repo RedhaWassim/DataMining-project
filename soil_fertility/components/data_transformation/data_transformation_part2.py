@@ -10,7 +10,7 @@ from soil_fertility.components.transformations import (
     ZScoreTransformation,
     EqualWidthDescritizer,
     EqualFreqDescritizer,
-    DateTimeTransformer
+    DateTimeTransformer,
 )
 from soil_fertility.logger import logging
 import pandas as pd
@@ -27,9 +27,9 @@ class DataTransformationConfig(PathConfig):
 
 
 class DataTransformationTwo(BaseModel):
-    transformation_config : DataTransformationConfig = DataTransformationConfig()
+    transformation_config: DataTransformationConfig = DataTransformationConfig()
 
-    def generate_transformer_second_data(self) -> Pipeline :
+    def generate_transformer_second_data(self) -> Pipeline:
         try:
             preprocessor = Pipeline(
                 [
@@ -38,11 +38,10 @@ class DataTransformationTwo(BaseModel):
             )
 
             return preprocessor
-        
+
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-            
 
     def transform(
         self,
@@ -53,12 +52,11 @@ class DataTransformationTwo(BaseModel):
             df = pd.read_csv(data_path)
 
             df.dropna(inplace=True)
-            df.reset_index(drop=True,inplace=True)
+            df.reset_index(drop=True, inplace=True)
 
             os.makedirs(
                 os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
             )
-
 
             logging.info("data transformation started")
 
@@ -73,14 +71,11 @@ class DataTransformationTwo(BaseModel):
 
             logging.info("saving transformed data")
 
-            processed_data.to_csv(
-                self.transformation_config.raw_data_path, index=False
-            )
-
+            processed_data.to_csv(self.transformation_config.raw_data_path, index=False)
 
             logging.info("data saved")
 
-            values = ( 
+            values = (
                 self.transformation_config.part,
                 preprocessors,
                 self.transformation_config.raw_data_path,
@@ -95,5 +90,3 @@ class DataTransformationTwo(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-        
-

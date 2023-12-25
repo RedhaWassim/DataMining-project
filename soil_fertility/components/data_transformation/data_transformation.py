@@ -53,7 +53,10 @@ class DataTransformation(BaseModel):
     transformation_config: DataTransformationConfig = DataTransformationConfig()
 
     def generate_transformer_first_data(
-        self, numerical_features: List[str], strategie: str = "minmax"
+        self,
+        numerical_features: List[str],
+        strategie: str = "minmax",
+        target: str = None,
     ) -> None:
         try:
             if strategie == "minmax":
@@ -65,7 +68,8 @@ class DataTransformation(BaseModel):
                 preprocessor = ColumnTransformer(
                     [
                         ("numerical", numerical_pipeline, numerical_features),
-                    ]
+                    ],
+                    remainder="passthrough",
                 )
                 preprocessor.set_output(transform="pandas")
 
@@ -80,7 +84,8 @@ class DataTransformation(BaseModel):
                 preprocessor = ColumnTransformer(
                     [
                         ("numerical", numerical_pipeline, numerical_features),
-                    ]
+                    ],
+                    remainder="passthrough",
                 )
                 preprocessor.set_output(transform="pandas")
 
@@ -91,7 +96,6 @@ class DataTransformation(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-            
 
     def transform(
         self,
@@ -119,16 +123,23 @@ class DataTransformation(BaseModel):
                     include=["int64", "float64"]
                 ).columns
 
-                if target is not None:
-                    numerical_features = numerical_features.drop(target)
+            if target is not None:
+                numerical_features = numerical_features.drop(target)
 
             preprocessors = self.generate_transformer_first_data(
-                numerical_features=numerical_features, strategie=strategie
+                numerical_features=numerical_features,
+                strategie=strategie,
+                target=target,
             )
 
             logging.info("transforming train data")
+            print("train_coolumns= ", train_df.columns)
+            print("test_coolumns= ", test_df.columns)
+
             processed_train = preprocessors.fit_transform(train_df)
             processed_test = preprocessors.transform(test_df)
+            print("train_coolumns= ", train_df.columns)
+            print("test_coolumns= ", test_df.columns)
 
             logging.info("data transformation completed")
 
@@ -143,7 +154,7 @@ class DataTransformation(BaseModel):
 
             logging.info("data saved")
 
-            values = ( 
+            values = (
                 self.transformation_config.part,
                 preprocessors,
                 self.transformation_config.train_data_path,
@@ -159,5 +170,3 @@ class DataTransformation(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-        
-

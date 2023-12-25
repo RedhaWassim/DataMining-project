@@ -26,16 +26,19 @@ class DataTransformationConfig(PathConfig):
 
 
 class DataTransformationThree(BaseModel):
-    transformation_config : DataTransformationConfig = DataTransformationConfig()
+    transformation_config: DataTransformationConfig = DataTransformationConfig()
 
     def generate_transformer_third_data(
-        self, numerical_features: List[str], strategie: str = "frequency", k : int = 5
+        self, numerical_features: List[str], strategie: str = "frequency", k: int = 5
     ) -> None:
         try:
             if strategie == "frequency":
                 preprocessor = Pipeline(
                     [
-                        ("equal_freq_descritizer", EqualFreqDescritizer(k,columns=numerical_features)),
+                        (
+                            "equal_freq_descritizer",
+                            EqualFreqDescritizer(k, columns=numerical_features),
+                        ),
                     ]
                 )
 
@@ -44,7 +47,10 @@ class DataTransformationThree(BaseModel):
             elif strategie == "width":
                 preprocessor = Pipeline(
                     [
-                        ("equal_width_descritizer", EqualWidthDescritizer(k,columns=numerical_features)),
+                        (
+                            "equal_width_descritizer",
+                            EqualWidthDescritizer(k, columns=numerical_features),
+                        ),
                     ]
                 )
 
@@ -55,23 +61,22 @@ class DataTransformationThree(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-            
 
     def transform(
         self,
         train_path: str,
         test_path: str,
         target: Optional[str] = None,
-        k : int = 5,
-        numerical_features : List[str] = ["Temperature"],
-        strategie : Literal["frequency", "width"] = "frequency",
+        k: int = 5,
+        numerical_features: List[str] = ["Temperature"],
+        strategie: Literal["frequency", "width"] = "frequency",
     ):
         try:
             logging.info("reading train and test data")
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
 
-            df=pd.concat([train_df,test_df],axis=0)
+            df = pd.concat([train_df, test_df], axis=0)
 
             os.makedirs(
                 os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
@@ -92,13 +97,11 @@ class DataTransformationThree(BaseModel):
 
             logging.info("saving transformed data")
 
-            processed_df.to_csv(
-                self.transformation_config.raw_data_path, index=False
-            )
+            processed_df.to_csv(self.transformation_config.raw_data_path, index=False)
 
             logging.info("data saved")
 
-            values = ( 
+            values = (
                 self.transformation_config.part,
                 preprocessors,
                 self.transformation_config.raw_data_path,
@@ -113,5 +116,3 @@ class DataTransformationThree(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-        
-
