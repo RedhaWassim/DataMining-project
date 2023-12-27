@@ -1,20 +1,22 @@
 import pandas as pd
-from soil_fertility.logger import logging   
+from soil_fertility.logger import logging
 from soil_fertility.utils import retreive_base_path, load_object
 import os
 
+
 class PredictPipeline:
     def __init__(self):
-        base_path=retreive_base_path()
-        artifacts_path=os.path.join(base_path,"artifacts")
+        base_path = retreive_base_path()
+        artifacts_path = os.path.join(base_path, "artifacts")
         self.models_path = os.path.join(artifacts_path, "models")
         self.preprocessors_path = os.path.join(artifacts_path, "preprocessors")
-    
+
     def predict(self, features):
         model_path = os.path.join(self.models_path, "model.pkl")
         preprocessor_path = os.path.join(self.preprocessors_path, "preprocessor.pkl")
-        model=load_object(model_path)
-        preprocessor=load_object(prep)
+        model = load_object(model_path)
+        preprocessor = load_object(prep)
+
 
 class InputData:
     def __init__(
