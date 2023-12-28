@@ -12,8 +12,8 @@ from soil_fertility.components.models.KNN import KNN
 from typing import Dict
 import pandas as pd
 from sklearn.metrics import accuracy_score
-
-
+from soil_fertility.utils import read_params_from_yaml
+import os
 @dataclass
 class ModelConfig:
     base_path: str = retreive_base_path()
@@ -41,21 +41,16 @@ class ModelTrainer:
                 "random_forest": RandomForest(),
             }
 
-            # change to yaml
-            params = {
-                "decision_tree": {"max_depth": [10, 20, 30, 40, 50]},
-                "random_forest": {
-                    "max_depth": [10, 20, 30, 40, 50],
-                    "n_trees": [10, 20, 30, 40, 50],
-                },
-            }
+            yaml_params = read_params_from_yaml(os.path.join(self.model_config.base_path,"models_params.yaml"))
+
             if mode == "default":
                 model_report: dict = evaluate_model(
-                    X_train, y_train, X_test, y_test, models, params=params
+                    X_train, y_train, X_test, y_test, models
                 )
+
             elif mode == "gridsearch":
                 model_report: dict = evaluate_model_gridseach(
-                    X_train, y_train, X_test, y_test, models, params=params
+                    X_train, y_train, X_test, y_test, models, params=yaml_params
                 )
 
             else:
@@ -66,21 +61,33 @@ class ModelTrainer:
 
             logging.info("Training completed")
 
-            best_model_score = max(sorted(model_report.values()))
+            # best_model_score = max(sorted(model_report.values()))
 
-            best_model_name = list(model_report.keys())[
-                list(model_report.values()).index(best_model_score)
-            ]
-            best_model = models[best_model_name]
+            # best_model_name = list(model_report.keys())[
+            #     list(model_report.values()).index(best_model_score)
+            # ]
+            # best_model = models[best_model_name]
 
-            if best_model_score < 0.6:
-                raise Exception(
-                    "Models accuracy is less than 0.6, no best model founjd"
-                )
+            # if best_model_score < 0.6:
+            #     raise Exception(
+            #         "Models accuracy is less than 0.6, no best model founjd"
+            #     )
 
             logging.info("Best model found ")
 
-            save_object(file_path=self.model_config.trained_model_path, obj=best_model)
+            # save_object(file_path=self.model_config.trained_model_path, obj=best_model)
+
+            for model_name, model in model_report.items():
+                if model_name == "metrics":
+                    continue
+                
+                save_object(
+                    file_path=Path(
+                        self.model_config.base_path,
+                        f"artifacts/models/{model_name}.pkl",
+                    ),
+                    obj=model,
+                )
 
             return model_report
 

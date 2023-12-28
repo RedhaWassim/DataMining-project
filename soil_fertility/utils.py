@@ -3,7 +3,7 @@ from pathlib import Path
 from soil_fertility.logger import logging
 import os
 import pickle
-
+import yaml
 
 def retreive_base_path():
     current_path = Path(__file__).resolve()
@@ -34,3 +34,22 @@ def save_object(file_path, obj):
     except Exception as e:
         logging.error(f"Exception occured {e}")
         raise e
+
+
+def load_object(file_path):
+    try:
+        with open(file_path, "rb") as file_obj:
+            obj = pickle.load(file_obj)
+
+        return obj
+
+    except Exception as e:
+        logging.error(f"Exception occured {e}")
+        raise e
+    
+
+def read_params_from_yaml(yaml_path):
+        with open(yaml_path, 'r') as yaml_file:
+            params = yaml.safe_load(yaml_file)
+        return params
+

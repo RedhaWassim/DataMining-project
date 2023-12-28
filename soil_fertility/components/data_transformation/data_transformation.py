@@ -2,10 +2,9 @@ from pydantic import BaseModel
 from soil_fertility.components.path_config import PathConfig
 from typing import Literal, List, Optional
 from sklearn.pipeline import Pipeline
-from soil_fertility.components.transformations import (
+from soil_fertility.components.data_transformation.transformations import (
     DropMissingValues,
     DropDuplicates,
-    CustomImputer,
     MinMaxTransformation,
     ZScoreTransformation,
 )
@@ -13,7 +12,7 @@ from sklearn.compose import ColumnTransformer
 from soil_fertility.logger import logging
 import pandas as pd
 import os
-
+from soil_fertility.utils import save_object
 
 class GeneralProcessing(BaseModel):
     def generate_transformer(self):
@@ -21,7 +20,6 @@ class GeneralProcessing(BaseModel):
             [
                 ("drop_missing_values", DropMissingValues()),
                 ("drop_duplicates", DropDuplicates()),
-                ("custom_imputer", CustomImputer()),
             ]
         )
         return all_features_pipeline
@@ -34,6 +32,8 @@ class GeneralProcessing(BaseModel):
             processed_data = all_features_pipeline.fit_transform(data)
 
             logging.info("general processing completed")
+
+            save_object(r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/all_features_pipeline.pkl",all_features_pipeline)
 
             return processed_data
 
@@ -165,6 +165,7 @@ class DataTransformation(BaseModel):
             self.transformation_config.update_path()
 
             logging.info("data transformation completed")
+            save_object(r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/preprocessor_first.pkl",preprocessors)
 
             return values
         except Exception as e:

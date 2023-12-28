@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from soil_fertility.components.path_config import PathConfig
 from typing import Literal, List, Optional
 from sklearn.pipeline import Pipeline
-from soil_fertility.components.transformations import (
+from soil_fertility.components.data_transformation.transformations import (
     DropMissingValues,
     DropDuplicates,
     CustomImputer,
