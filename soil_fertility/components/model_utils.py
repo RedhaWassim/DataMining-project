@@ -32,15 +32,18 @@ def evaluate_model(
             y_test_pred = model.predict(X_test.to_numpy())
 
             # Calculate scores
-            metrics_per_class = calculate_metrics_per_class(y_test, y_test_pred, classes)
-            specificity_per_class_scores = specificite_per_class(y_test, y_test_pred, classes)
-            test_accuracy= accuracy(y_test, y_test_pred)
+            metrics_per_class = calculate_metrics_per_class(
+                y_test, y_test_pred, classes
+            )
+            specificity_per_class_scores = specificite_per_class(
+                y_test, y_test_pred, classes
+            )
+            test_accuracy = accuracy(y_test, y_test_pred)
             rec = recall(y_test, y_test_pred)
             prec = precision(y_test, y_test_pred)
             f1 = f1_score(y_test, y_test_pred)
             spec = specificite(y_test, y_test_pred)
             conf_mat = confusion_matrix(y_test, y_test_pred)
-
 
             # Store the model and its metrics
             report[model_name] = model
@@ -58,6 +61,7 @@ def evaluate_model(
     except Exception as e:
         logging.error(f"Exception occurred: {e}")
         raise
+
 
 def evaluate_model_gridseach(
     X_train: pd.DataFrame,
@@ -86,19 +90,22 @@ def evaluate_model_gridseach(
             y_test_pred = grid_search.predict(X_test)
 
             # Calculate scores
-            metrics_per_class = calculate_metrics_per_class(y_test, y_test_pred, classes)
-            specificity_per_class_scores = specificite_per_class(y_test, y_test_pred, classes)
-            test_accuracy= accuracy(y_test, y_test_pred)
+            metrics_per_class = calculate_metrics_per_class(
+                y_test, y_test_pred, classes
+            )
+            specificity_per_class_scores = specificite_per_class(
+                y_test, y_test_pred, classes
+            )
+            test_accuracy = accuracy(y_test, y_test_pred)
             rec = recall(y_test, y_test_pred)
             prec = precision(y_test, y_test_pred)
             f1 = f1_score(y_test, y_test_pred)
             spec = specificite(y_test, y_test_pred)
             conf_mat = confusion_matrix(y_test, y_test_pred)
 
-
             # Store the model and its metrics
-            report[str(model_name)+"_gridsearch"] = grid_search
-            report["metrics"][str(model_name)+"_gridsearch"] = {
+            report[str(model_name) + "_gridsearch"] = grid_search
+            report["metrics"][str(model_name) + "_gridsearch"] = {
                 "accuracy": test_accuracy,
                 "confusion_matrix": conf_mat,
                 "recall": rec,
@@ -113,5 +120,3 @@ def evaluate_model_gridseach(
     except Exception as e:
         logging.error(f"Exception occured {e}")
         raise e
-
-

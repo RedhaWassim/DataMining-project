@@ -5,6 +5,7 @@ import os
 import pickle
 import yaml
 
+
 def retreive_base_path():
     current_path = Path(__file__).resolve()
     base_path = None
@@ -46,10 +47,9 @@ def load_object(file_path):
     except Exception as e:
         logging.error(f"Exception occured {e}")
         raise e
-    
+
 
 def read_params_from_yaml(yaml_path):
-        with open(yaml_path, 'r') as yaml_file:
-            params = yaml.safe_load(yaml_file)
-        return params
-
+    with open(yaml_path, "r") as yaml_file:
+        params = yaml.safe_load(yaml_file)
+    return params

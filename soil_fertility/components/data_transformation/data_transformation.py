@@ -14,6 +14,7 @@ import pandas as pd
 import os
 from soil_fertility.utils import save_object
 
+
 class GeneralProcessing(BaseModel):
     def generate_transformer(self):
         all_features_pipeline = Pipeline(
@@ -33,7 +34,10 @@ class GeneralProcessing(BaseModel):
 
             logging.info("general processing completed")
 
-            save_object(r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/all_features_pipeline.pkl",all_features_pipeline)
+            save_object(
+                r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/all_features_pipeline.pkl",
+                all_features_pipeline,
+            )
 
             return processed_data
 
@@ -165,7 +169,10 @@ class DataTransformation(BaseModel):
             self.transformation_config.update_path()
 
             logging.info("data transformation completed")
-            save_object(r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/preprocessor_first.pkl",preprocessors)
+            save_object(
+                r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/preprocessor_first.pkl",
+                preprocessors,
+            )
 
             return values
         except Exception as e:

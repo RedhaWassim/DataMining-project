@@ -71,8 +71,8 @@ class DataTransformationThree(BaseModel):
         numerical_features: List[str] = ["Temperature"],
         strategie: Literal["frequency", "width"] = "frequency",
         save: bool = True,
-        train : Optional[pd.DataFrame] = None,
-        test : Optional[pd.DataFrame] = None,
+        train: Optional[pd.DataFrame] = None,
+        test: Optional[pd.DataFrame] = None,
         return_df: bool = False,
     ):
         try:
@@ -80,16 +80,17 @@ class DataTransformationThree(BaseModel):
                 train_df = train
                 test_df = test
 
-            else : 
+            else:
                 logging.info("reading train and test data")
                 train_df = pd.read_csv(train_path)
                 test_df = pd.read_csv(test_path)
 
             df = pd.concat([train_df, test_df], axis=0)
 
-            if save :
+            if save:
                 os.makedirs(
-                    os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
+                    os.path.dirname(self.transformation_config.raw_data_path),
+                    exist_ok=True,
                 )
 
             logging.info("data transformation started")
@@ -108,7 +109,9 @@ class DataTransformationThree(BaseModel):
             logging.info("saving transformed data")
 
             if save:
-                processed_df.to_csv(self.transformation_config.raw_data_path, index=False)
+                processed_df.to_csv(
+                    self.transformation_config.raw_data_path, index=False
+                )
 
             logging.info("data saved")
 

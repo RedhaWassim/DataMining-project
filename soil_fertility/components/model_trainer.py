@@ -14,6 +14,8 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from soil_fertility.utils import read_params_from_yaml
 import os
+
+
 @dataclass
 class ModelConfig:
     base_path: str = retreive_base_path()
@@ -41,7 +43,9 @@ class ModelTrainer:
                 "random_forest": RandomForest(),
             }
 
-            yaml_params = read_params_from_yaml(os.path.join(self.model_config.base_path,"models_params.yaml"))
+            yaml_params = read_params_from_yaml(
+                os.path.join(self.model_config.base_path, "models_params.yaml")
+            )
 
             if mode == "default":
                 model_report: dict = evaluate_model(
@@ -80,7 +84,7 @@ class ModelTrainer:
             for model_name, model in model_report.items():
                 if model_name == "metrics":
                     continue
-                
+
                 save_object(
                     file_path=Path(
                         self.model_config.base_path,

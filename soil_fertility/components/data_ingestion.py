@@ -17,7 +17,12 @@ class DataIngestion(BaseModel):
     general_processing: GeneralProcessing = GeneralProcessing()
 
     def init_ingestion(
-        self, path: str = None, option: Literal["csv", "xlsx"] = "csv", save: Optional[bool] = True, data : Optional[pd.DataFrame] = None, return_df: bool = False
+        self,
+        path: str = None,
+        option: Literal["csv", "xlsx"] = "csv",
+        save: Optional[bool] = True,
+        data: Optional[pd.DataFrame] = None,
+        return_df: bool = False,
     ) -> Dict[str, str | int]:
         try:
             logging.info("ingestion started")
@@ -25,7 +30,7 @@ class DataIngestion(BaseModel):
                 raise Exception("Either data or path should be provided")
             if data is not None and path is not None:
                 raise Exception("Either data or path should be provided")
-            
+
             if data is not None:
                 df = data
 
