@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from soil_fertility.components.path_config import PathConfig
 from typing import Literal, List, Optional
 from sklearn.pipeline import Pipeline
-from soil_fertility.components.transformations import (
+from soil_fertility.components.data_transformation.transformations import (
     DropMissingValues,
     DropDuplicates,
     CustomImputer,
@@ -64,23 +64,33 @@ class DataTransformationThree(BaseModel):
 
     def transform(
         self,
-        train_path: str,
-        test_path: str,
+        train_path: str = None,
+        test_path: str = None,
         target: Optional[str] = None,
         k: int = 5,
         numerical_features: List[str] = ["Temperature"],
         strategie: Literal["frequency", "width"] = "frequency",
+        save: bool = True,
+        train : Optional[pd.DataFrame] = None,
+        test : Optional[pd.DataFrame] = None,
+        return_df: bool = False,
     ):
         try:
-            logging.info("reading train and test data")
-            train_df = pd.read_csv(train_path)
-            test_df = pd.read_csv(test_path)
+            if train is not None and test is not None:
+                train_df = train
+                test_df = test
+
+            else : 
+                logging.info("reading train and test data")
+                train_df = pd.read_csv(train_path)
+                test_df = pd.read_csv(test_path)
 
             df = pd.concat([train_df, test_df], axis=0)
 
-            os.makedirs(
-                os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
-            )
+            if save :
+                os.makedirs(
+                    os.path.dirname(self.transformation_config.raw_data_path), exist_ok=True
+                )
 
             logging.info("data transformation started")
 
@@ -97,10 +107,13 @@ class DataTransformationThree(BaseModel):
 
             logging.info("saving transformed data")
 
-            processed_df.to_csv(self.transformation_config.raw_data_path, index=False)
+            if save:
+                processed_df.to_csv(self.transformation_config.raw_data_path, index=False)
 
             logging.info("data saved")
 
+            if return_df:
+                return processed_df, preprocessors
             values = (
                 self.transformation_config.part,
                 preprocessors,

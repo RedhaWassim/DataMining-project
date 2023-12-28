@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Literal
+from typing import Dict, Literal, Optional
 
 import pandas as pd
 from pydantic import BaseModel
@@ -17,21 +17,30 @@ class DataIngestion(BaseModel):
     general_processing: GeneralProcessing = GeneralProcessing()
 
     def init_ingestion(
-        self, path: str, option: Literal["csv", "xlsx"] = "csv"
+        self, path: str = None, option: Literal["csv", "xlsx"] = "csv", save: Optional[bool] = True, data : Optional[pd.DataFrame] = None, return_df: bool = False
     ) -> Dict[str, str | int]:
         try:
             logging.info("ingestion started")
-            if option == "csv":
-                df = pd.read_csv(path)
-            elif option == "xlsx":
-                df = pd.read_excel(path)
+            if data is None and path is None:
+                raise Exception("Either data or path should be provided")
+            if data is not None and path is not None:
+                raise Exception("Either data or path should be provided")
+            
+            if data is not None:
+                df = data
+
+            if path is not None:
+                if option == "csv":
+                    df = pd.read_csv(path)
+                elif option == "xlsx":
+                    df = pd.read_excel(path)
 
             logging.info("Raw data read from {path}")
-
-            os.makedirs(
-                os.path.dirname(self.ingestion_config.raw_data_path), exist_ok=True
-            )
-            df.to_csv(self.ingestion_config.raw_data_path, index=False)
+            if save:
+                os.makedirs(
+                    os.path.dirname(self.ingestion_config.raw_data_path), exist_ok=True
+                )
+                df.to_csv(self.ingestion_config.raw_data_path, index=False)
 
             logging.info("starting general processing")
 
@@ -44,9 +53,12 @@ class DataIngestion(BaseModel):
             raw_train, raw_test = train_test_split(
                 new_df, test_size=0.2, random_state=42
             )
-            raw_train.to_csv(self.ingestion_config.train_data_path, index=False)
-            raw_test.to_csv(self.ingestion_config.test_data_path, index=False)
+            if save:
+                raw_train.to_csv(self.ingestion_config.train_data_path, index=False)
+                raw_test.to_csv(self.ingestion_config.test_data_path, index=False)
 
+            if return_df:
+                return raw_train, raw_test
             values = (
                 self.ingestion_config.part,
                 self.ingestion_config.train_data_path,
