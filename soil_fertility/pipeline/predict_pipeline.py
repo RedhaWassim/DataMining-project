@@ -59,26 +59,20 @@ class PredictPipeline:
             prediction = model.predict(data.to_numpy())[0]
 
             if drift :
-                self.data_drift_check(data)
+                drift_value=self.data_drift_check(data)
 
-            return prediction
+            return prediction, drift_value
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
 
-    def data_drift_check(self, data , model_name: str):
-        drift_detector = DataDriftDetector(data)
+    def data_drift_check(self, train_data, new_data, model_name: str):
+        train_data = pd.read_csv(self.train_data_path)
+        drift_detector = DataDriftDetector(train_data)
 
-        new_pred_data = load_new_prediction_data()
+        drift_results = drift_detector.detect_drift(new_data)
 
-        reference_data = load_reference_data()
-
-
-        drift_results = drift_detector.detect_drift(new_pred_data)
-
-        if drift_detector.report_drift(drift_results):
-    # Handle drift detection, e.g., retrain model, alert, etc.
-            handle_drift()
+        return drift_detector.report_drift(drift_results)
 
 
 

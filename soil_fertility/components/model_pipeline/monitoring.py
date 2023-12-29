@@ -21,4 +21,6 @@ class DataDriftDetector:
                 drift_detected = True
         return drift_detected
 
-
+    def handle_drift():
+        return "Drift detected, model retraining required"
+    

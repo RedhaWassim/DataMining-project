@@ -25,7 +25,7 @@ class ModelTrainer:
         self.model_config = ModelConfig()
 
     def init_training(
-        self, train_data, test_data, target_column, mode: str = "default"
+        self, train_data, test_data, target_column, mode: str = "default", save_model: bool = False
     ):
         try:
             logging.info("Splitting train and test data")
@@ -77,22 +77,25 @@ class ModelTrainer:
 
             logging.info("Best model found ")
 
-            # save_object(file_path=self.model_config.trained_model_path, obj=best_model)
+            if save_model:
+                self.save_model(model_report)
 
-            for model_name, model in model_report.items():
-                if model_name == "metrics":
-                    continue
-
-                save_object(
-                    file_path=Path(
-                        self.model_config.base_path,
-                        f"artifacts/models/{model_name}.pkl",
-                    ),
-                    obj=model,
-                )
 
             return model_report
 
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
+
+    def save_model(self, model_report: Dict):
+        for model_name, model in model_report.items():
+            if model_name == "metrics":
+                continue
+        
+            save_object(
+                file_path=Path(
+                    self.model_config.base_path,
+                    f"artifacts/models/{model_name}.pkl",
+                ),
+                obj=model,
+            )
