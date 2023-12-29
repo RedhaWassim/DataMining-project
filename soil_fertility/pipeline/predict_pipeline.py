@@ -48,14 +48,40 @@ class PredictPipeline:
             fixed_data = all_processor.transform(features)
             scaled_data = preprocessor.transform(fixed_data)
             data = fix_columns_name(scaled_data)
+
+
             data.drop(columns=["Fertility"], inplace=True)
+
+
             prediction = model.predict(data.to_numpy())[0]
 
             return prediction
-
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
+
+    def data_drif_check(self, features, model_name: str):
+            # Example of how to use it in your prediction pipeline
+    # predict_pipeline.py
+
+# Assuming you have a function to load new prediction data
+        new_pred_data = load_new_prediction_data()
+
+# Load your reference (training) data
+        reference_data = load_reference_data()
+
+# Initialize the drift detector
+        drift_detector = DataDriftDetector(reference_data)
+
+# Detect drift
+        drift_results = drift_detector.detect_drift(new_pred_data)
+
+# Report drift
+        if drift_detector.report_drift(drift_results):
+    # Handle drift detection, e.g., retrain model, alert, etc.
+            handle_drift()
+
+
 
 
 class InputData:
