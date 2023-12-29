@@ -4,6 +4,7 @@ from scipy.stats import ks_2samp
 class DataDriftDetector:
     def __init__(self, reference_data: pd.DataFrame):
         self.reference_data = reference_data
+        self.reference_data = self.reference_data.drop(columns=['Fertility'])
 
     def detect_drift(self, new_data: pd.DataFrame):
         drift_results = {}

@@ -2,7 +2,7 @@ from soil_fertility.logger import logging
 from typing import Dict
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
-from soil_fertility.components.model_pipeline.utils.metrics import (
+from soil_fertility.components.utils.metrics import (
     calculate_metrics_per_class,
     specificite_per_class,
     accuracy,

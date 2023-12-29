@@ -4,7 +4,7 @@ from soil_fertility.logger import logging
 from dataclasses import dataclass
 from pathlib import Path
 from soil_fertility.utils import retreive_base_path, save_object
-from soil_fertility.model_pipeline.utils.model_utils import (
+from soil_fertility.components.utils.model_utils import (
     evaluate_model,
     evaluate_model_gridseach,
 )

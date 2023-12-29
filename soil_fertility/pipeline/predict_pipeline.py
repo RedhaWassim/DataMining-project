@@ -2,6 +2,7 @@ import pandas as pd
 from soil_fertility.logger import logging
 from soil_fertility.utils import retreive_base_path, load_object
 import os
+from soil_fertility.components.model_pipeline.monitoring import DataDriftDetector   
 
 
 def fix_columns_name(data):
@@ -31,8 +32,9 @@ class PredictPipeline:
         artifacts_path = os.path.join(base_path, "artifacts")
         self.models_path = os.path.join(artifacts_path, "models")
         self.preprocessors_path = os.path.join(artifacts_path, "preprocessors")
+        self.train_data_path = os.path.join(artifacts_path, "/1/train")
 
-    def predict(self, features, model_name: str):
+    def predict(self, features, model_name: str, drift: bool = False):
         try:
             model_path = os.path.join(self.models_path, model_name)
             all_processor_path = os.path.join(
@@ -41,42 +43,39 @@ class PredictPipeline:
             preprocessor_path = os.path.join(
                 self.preprocessors_path, "preprocessor_first.pkl"
             )
+
             model = load_object(model_path)
             preprocessor = load_object(preprocessor_path)
             all_processor = load_object(all_processor_path)
 
+
             fixed_data = all_processor.transform(features)
             scaled_data = preprocessor.transform(fixed_data)
             data = fix_columns_name(scaled_data)
-
 
             data.drop(columns=["Fertility"], inplace=True)
 
 
             prediction = model.predict(data.to_numpy())[0]
 
+            if drift :
+                self.data_drift_check(data)
+
             return prediction
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
 
-    def data_drif_check(self, features, model_name: str):
-            # Example of how to use it in your prediction pipeline
-    # predict_pipeline.py
+    def data_drift_check(self, data , model_name: str):
+        drift_detector = DataDriftDetector(data)
 
-# Assuming you have a function to load new prediction data
         new_pred_data = load_new_prediction_data()
 
-# Load your reference (training) data
         reference_data = load_reference_data()
 
-# Initialize the drift detector
-        drift_detector = DataDriftDetector(reference_data)
 
-# Detect drift
         drift_results = drift_detector.detect_drift(new_pred_data)
 
-# Report drift
         if drift_detector.report_drift(drift_results):
     # Handle drift detection, e.g., retrain model, alert, etc.
             handle_drift()

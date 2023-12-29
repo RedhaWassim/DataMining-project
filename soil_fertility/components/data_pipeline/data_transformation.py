@@ -1,6 +1,6 @@
 from sklearn.pipeline import Pipeline
 from pydantic import BaseModel
-from soil_fertility.components.path_config import PathConfig
+from soil_fertility.components.utils.path_config import PathConfig
 from typing import Literal, List, Optional
 
 from sklearn.compose import ColumnTransformer
@@ -9,7 +9,7 @@ import pandas as pd
 import os
 from soil_fertility.utils import save_object
 
-from soil_fertility.components.utils.transformation import (
+from soil_fertility.components.utils.transformations import (
     DropMissingValues,
     DropDuplicates,
     MinMaxTransformation,
@@ -163,9 +163,11 @@ class DataTransformation(BaseModel):
 
             processed_train = preprocessors.fit_transform(train_df)
             processed_test = preprocessors.transform(test_df)
-            print("train_coolumns= ", train_df.columns)
-            print("test_coolumns= ", test_df.columns)
 
+
+            processed_train.columns = train_df.columns
+            processed_test.columns = test_df.columns
+            
             logging.info("data transformation completed")
 
             logging.info("saving transformed data")
