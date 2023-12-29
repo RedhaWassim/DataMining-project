@@ -166,3 +166,4 @@ cython_debug/
 artifacts/
 logs/
 data/
+.useless

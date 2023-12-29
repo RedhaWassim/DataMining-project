@@ -1,7 +1,7 @@
+from pathlib import Path
 from soil_fertility.utils import retreive_base_path
 from pydantic import BaseModel
 from typing import Literal
-from pathlib import Path
 
 
 class PathConfig(BaseModel):

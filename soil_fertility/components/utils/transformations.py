@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Union, Dict
-from soil_fertility.components.utils import CalculateTendencies
+from soil_fertility.components.utils.tendencies import CalculateTendencies
 
 
 class DropMissingValues(BaseEstimator, TransformerMixin):
@@ -423,3 +423,6 @@ class DateTimeTransformer(BaseEstimator, TransformerMixin):
         processed_df = self._process(df)
 
         return processed_df
+
+
+
