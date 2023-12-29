@@ -1,9 +1,8 @@
 from soil_fertility.logger import logging
 from typing import Dict
 import pandas as pd
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
-from soil_fertility.components.metrics import (
+from soil_fertility.components.model_pipeline.utils.metrics import (
     calculate_metrics_per_class,
     specificite_per_class,
     accuracy,
@@ -57,6 +56,7 @@ def evaluate_model(
                 "metrics_per_class": metrics_per_class,
                 "specificity_per_class": specificity_per_class_scores,
             }
+
         return report
     except Exception as e:
         logging.error(f"Exception occurred: {e}")

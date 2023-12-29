@@ -1,17 +1,15 @@
-from soil_fertility.components.models.decision_tree import DecisionTree
-from soil_fertility.components.models.random_forest import RandomForest
+from soil_fertility.components.model_pipeline.models.decision_tree import DecisionTree
+from soil_fertility.components.model_pipeline.models.random_forest import RandomForest
 from soil_fertility.logger import logging
 from dataclasses import dataclass
 from pathlib import Path
 from soil_fertility.utils import retreive_base_path, save_object
-from soil_fertility.components.model_utils import (
+from soil_fertility.model_pipeline.utils.model_utils import (
     evaluate_model,
     evaluate_model_gridseach,
 )
-from soil_fertility.components.models.KNN import KNN
+from soil_fertility.components.model_pipeline.models.KNN import KNN
 from typing import Dict
-import pandas as pd
-from sklearn.metrics import accuracy_score
 from soil_fertility.utils import read_params_from_yaml
 import os
 

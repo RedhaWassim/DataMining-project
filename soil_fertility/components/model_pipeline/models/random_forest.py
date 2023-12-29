@@ -1,5 +1,5 @@
 import numpy as np
-from soil_fertility.components.models.decision_tree import DecisionTree
+from soil_fertility.components.model_pipeline.models.decision_tree import DecisionTree
 
 
 class RandomForest:

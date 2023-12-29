@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from sklearn.model_selection import train_test_split
 
 from soil_fertility.logger import logging
-from soil_fertility.components.path_config import PathConfig
-from soil_fertility.components.data_transformation.data_transformation import (
-    GeneralProcessing,
+from soil_fertility.components.utils.path_config import PathConfig
+from soil_fertility.components.utils.transformation import (
+    GeneralProcessing
 )
 
 
