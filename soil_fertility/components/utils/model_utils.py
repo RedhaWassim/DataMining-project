@@ -19,15 +19,13 @@ def evaluate_model(
     models: Dict[str, object],
 ) -> Dict[str, object]:
     try:
-        report = {"metrics": {}}  # Initialize the report with a metrics dictionary
+        report = {"metrics": {}}  
         classes = np.unique(y_test)
 
         for model_name, model in models.items():
-            # Fit the model
             model.fit(X_train.to_numpy(), y_train.to_numpy())
             y_test_pred = model.predict(X_test.to_numpy())
 
-            # Calculate scores for each class
             metrics_per_class = {}
             for class_label in classes:
                 prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
@@ -39,7 +37,6 @@ def evaluate_model(
                     "specificity": spec,
                 }
 
-            # Calculate micro and macro averages
             micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
             )
@@ -48,7 +45,6 @@ def evaluate_model(
                 y_test, y_test_pred, classes
             )
 
-            # Store the model and its metrics
             report[model_name] = model
             report["metrics"][model_name] = {
                 "micro_average": {
@@ -89,7 +85,6 @@ def evaluate_model_gridsearch(
             grid_search.fit(X_train.to_numpy(), y_train.to_numpy())
             y_test_pred = grid_search.predict(X_test.to_numpy())
 
-            # Calculate scores for each class
             metrics_per_class = {}
             for class_label in classes:
                 prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
@@ -101,7 +96,6 @@ def evaluate_model_gridsearch(
                     "specificity": spec,
                 }
 
-            # Calculate micro and macro averages
             micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
             )
@@ -110,7 +104,6 @@ def evaluate_model_gridsearch(
                 y_test, y_test_pred, classes
             )
 
-            # Store the model and its metrics
             report[model_name + "_gridsearch"] = grid_search
             report["metrics"][model_name] = {
                 "micro_average": {
