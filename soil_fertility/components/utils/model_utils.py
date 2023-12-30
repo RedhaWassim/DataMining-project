@@ -7,6 +7,7 @@ from soil_fertility.components.utils.metrics import (
     specificity,
     micro_average,
     macro_average,
+    accuracy
 )
 import numpy as np
 
@@ -36,6 +37,7 @@ def evaluate_model(
                     "f1_score": f1,
                     "specificity": spec,
                 }
+                accuracy_score = accuracy(y_test, y_test_pred)
 
             micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
@@ -47,6 +49,7 @@ def evaluate_model(
 
             report[model_name] = model
             report["metrics"][model_name] = {
+                "accuracy": accuracy_score,
                 "micro_average": {
                     "precision": micro_precision,
                     "recall": micro_recall,
@@ -95,6 +98,7 @@ def evaluate_model_gridsearch(
                     "f1_score": f1,
                     "specificity": spec,
                 }
+                accuracy_score = accuracy(y_test, y_test_pred)
 
             micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
@@ -106,6 +110,7 @@ def evaluate_model_gridsearch(
 
             report[model_name + "_gridsearch"] = grid_search
             report["metrics"][model_name] = {
+                "accuracy": accuracy_score,
                 "micro_average": {
                     "precision": micro_precision,
                     "recall": micro_recall,

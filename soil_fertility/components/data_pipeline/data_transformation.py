@@ -19,6 +19,7 @@ from soil_fertility.components.utils.transformations import (
     DateTimeTransformer,
     MeanImputer,
 )
+from soil_fertility.utils import retreive_base_path
 
 
 class GeneralProcessing(BaseModel):
@@ -196,7 +197,7 @@ class DataTransformation(BaseModel):
 
             self.transformation_config.part += 1
             self.transformation_config.update_path()
-            path = f'{self.base_path}/artifacts/preprocessors/preprocessor_first.pkl'
+            path = f'{self.transformation_config.base_path}/artifacts/preprocessors/preprocessor_first.pkl'
 
             logging.info("data transformation completed")
             save_object(
