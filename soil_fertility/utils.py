@@ -64,4 +64,3 @@ def filter_dict(d):
         }
     else:
         return d
-
