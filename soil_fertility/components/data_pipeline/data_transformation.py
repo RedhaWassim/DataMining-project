@@ -24,6 +24,7 @@ from soil_fertility.utils import retreive_base_path
 
 class GeneralProcessing(BaseModel):
     base_path: str = retreive_base_path()
+
     def generate_transformer(self):
         all_features_pipeline = Pipeline(
             [
@@ -42,7 +43,7 @@ class GeneralProcessing(BaseModel):
             processed_data = all_features_pipeline.fit_transform(data)
 
             logging.info("general processing completed")
-            path = f'{self.base_path}/artifacts/preprocessors/all_features_pipeline.pkl'
+            path = f"{self.base_path}/artifacts/preprocessors/all_features_pipeline.pkl"
             save_object(
                 path,
                 all_features_pipeline,
@@ -197,7 +198,7 @@ class DataTransformation(BaseModel):
 
             self.transformation_config.part += 1
             self.transformation_config.update_path()
-            path = f'{self.transformation_config.base_path}/artifacts/preprocessors/preprocessor_first.pkl'
+            path = f"{self.transformation_config.base_path}/artifacts/preprocessors/preprocessor_first.pkl"
 
             logging.info("data transformation completed")
             save_object(

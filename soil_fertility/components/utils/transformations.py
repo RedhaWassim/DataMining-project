@@ -61,7 +61,7 @@ class DropMissingValues(BaseEstimator, TransformerMixin):
                 new_df[col] = new_df[col].astype(float)
             except Exception:
                 pass
-            
+
         return new_df
 
     def fit(self, X, y=None):
@@ -185,9 +185,8 @@ class CustomImputer(BaseEstimator, TransformerMixin):
         pass
 
 
-
 class MeanImputer(BaseEstimator, TransformerMixin):
-    def __init__(self, stabelize: bool = False, show: bool = True) -> None:
+    def __init__(self, stabelize: bool = False, show: bool = False) -> None:
         self.stabelize = stabelize
         self.show = show
 
@@ -210,10 +209,14 @@ class MeanImputer(BaseEstimator, TransformerMixin):
             upper_bound = q3 + 1.5 * iqr
 
             # Calculate mean without including outliers
-            mean_value = new_df[(new_df[col] >= lower_bound) & (new_df[col] <= upper_bound)][col].mean()
+            mean_value = new_df[
+                (new_df[col] >= lower_bound) & (new_df[col] <= upper_bound)
+            ][col].mean()
 
             # Replace only outlier values
-            outlier_condition = (new_df[col] < lower_bound) | (new_df[col] > upper_bound)
+            outlier_condition = (new_df[col] < lower_bound) | (
+                new_df[col] > upper_bound
+            )
             new_df.loc[outlier_condition, col] = mean_value
 
             if self.show:

@@ -3,27 +3,7 @@ from soil_fertility.logger import logging
 from soil_fertility.utils import retreive_base_path, load_object
 import os
 from soil_fertility.components.model_pipeline.monitoring import DataDriftDetector
-
-
-def fix_columns_name(data):
-    names = [
-        "N",
-        "P",
-        "K",
-        "pH",
-        "EC",
-        "OC",
-        "S",
-        "Zn",
-        "Fe",
-        "Cu",
-        "Mn",
-        "B",
-        "OM",
-        "Fertility",
-    ]
-    data.columns = names
-    return data
+from soil_fertility.components.utils.model_utils import fix_columns_name
 
 
 class PredictPipeline:

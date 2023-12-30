@@ -7,7 +7,7 @@ from soil_fertility.components.utils.metrics import (
     specificity,
     micro_average,
     macro_average,
-    accuracy
+    accuracy,
 )
 import numpy as np
 
@@ -20,7 +20,7 @@ def evaluate_model(
     models: Dict[str, object],
 ) -> Dict[str, object]:
     try:
-        report = {"metrics": {}}  
+        report = {"metrics": {}}
         classes = np.unique(y_test)
 
         for model_name, model in models.items():
@@ -128,3 +128,24 @@ def evaluate_model_gridsearch(
     except Exception as e:
         logging.error(f"Exception occurred {e}")
         raise e
+
+
+def fix_columns_name(data):
+    names = [
+        "N",
+        "P",
+        "K",
+        "pH",
+        "EC",
+        "OC",
+        "S",
+        "Zn",
+        "Fe",
+        "Cu",
+        "Mn",
+        "B",
+        "OM",
+        "Fertility",
+    ]
+    data.columns = names
+    return data
