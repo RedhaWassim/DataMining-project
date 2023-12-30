@@ -32,7 +32,7 @@ def evaluate_model(
             for class_label in classes:
                 prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
                 spec = specificity(y_test, y_test_pred, class_label)
-                metrics_per_class[class_label] = {
+                metrics_per_class[str(class_label)] = {
                     "precision": prec,
                     "recall": rec,
                     "f1_score": f1,
@@ -94,7 +94,7 @@ def evaluate_model_gridsearch(
             for class_label in classes:
                 prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
                 spec = specificity(y_test, y_test_pred, class_label)
-                metrics_per_class[class_label] = {
+                metrics_per_class[str(class_label)] = {
                     "precision": prec,
                     "recall": rec,
                     "f1_score": f1,

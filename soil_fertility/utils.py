@@ -53,3 +53,15 @@ def read_params_from_yaml(yaml_path):
     with open(yaml_path, "r") as yaml_file:
         params = yaml.safe_load(yaml_file)
     return params
+
+
+def filter_dict(d):
+    if isinstance(d, dict):
+        return {
+            key: filter_dict(value)
+            for key, value in d.items()
+            if isinstance(value, (dict, str, int, float))
+        }
+    else:
+        return d
+
