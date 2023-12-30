@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from soil_fertility.logger import logging
 from soil_fertility.components.utils.path_config import PathConfig
 from soil_fertility.components.data_pipeline.data_transformation import (
-    GeneralProcessing
+    GeneralProcessing,
 )
 
 

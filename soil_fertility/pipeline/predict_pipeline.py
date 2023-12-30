@@ -2,7 +2,7 @@ import pandas as pd
 from soil_fertility.logger import logging
 from soil_fertility.utils import retreive_base_path, load_object
 import os
-from soil_fertility.components.model_pipeline.monitoring import DataDriftDetector   
+from soil_fertility.components.model_pipeline.monitoring import DataDriftDetector
 
 
 def fix_columns_name(data):
@@ -32,7 +32,7 @@ class PredictPipeline:
         artifacts_path = os.path.join(base_path, "artifacts")
         self.models_path = os.path.join(artifacts_path, "models")
         self.preprocessors_path = os.path.join(artifacts_path, "preprocessors")
-        self.train_data_path = os.path.join(artifacts_path, "/1/train")
+        self.train_data_path = os.path.join(artifacts_path, "intermediate/1/train.csv")
 
     def predict(self, features, model_name: str, drift: bool = False):
         try:
@@ -48,33 +48,33 @@ class PredictPipeline:
             preprocessor = load_object(preprocessor_path)
             all_processor = load_object(all_processor_path)
 
-
             fixed_data = all_processor.transform(features)
             scaled_data = preprocessor.transform(fixed_data)
             data = fix_columns_name(scaled_data)
 
             data.drop(columns=["Fertility"], inplace=True)
+            s = data.to_numpy()
 
+            prediction = model.predict(data.to_numpy())
 
-            prediction = model.predict(data.to_numpy())[0]
+            if drift:
+                drift_value, drift_results = self.data_drift_check(data)
 
-            if drift :
-                drift_value=self.data_drift_check(data)
-
-            return prediction, drift_value
+                return prediction, drift_value, drift_results
+            else:
+                return prediction, False, None
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
 
-    def data_drift_check(self, train_data, new_data, model_name: str):
+    def data_drift_check(self, new_data):
         train_data = pd.read_csv(self.train_data_path)
         drift_detector = DataDriftDetector(train_data)
 
         drift_results = drift_detector.detect_drift(new_data)
+        drift_value, drift_results = drift_detector.report_drift(drift_results)
 
-        return drift_detector.report_drift(drift_results)
-
-
+        return drift_value, drift_results
 
 
 class InputData:

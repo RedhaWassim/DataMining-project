@@ -19,6 +19,7 @@ from soil_fertility.components.utils.transformations import (
     DateTimeTransformer,
 )
 
+
 class GeneralProcessing(BaseModel):
     def generate_transformer(self):
         all_features_pipeline = Pipeline(
@@ -56,6 +57,7 @@ class DataTransformationConfig_one(PathConfig):
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
         self.update_path()
 
+
 class DataTransformationConfig_two(PathConfig):
     def __init__(self):
         super().__init__()
@@ -64,14 +66,13 @@ class DataTransformationConfig_two(PathConfig):
 
         self.update_path()
 
+
 class DataTransformationConfig_three(PathConfig):
     def __init__(self):
         super().__init__()
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
         self.part = 3
         self.update_path()
-
-
 
 
 class DataTransformation(BaseModel):
@@ -164,10 +165,9 @@ class DataTransformation(BaseModel):
             processed_train = preprocessors.fit_transform(train_df)
             processed_test = preprocessors.transform(test_df)
 
-
             processed_train.columns = train_df.columns
             processed_test.columns = test_df.columns
-            
+
             logging.info("data transformation completed")
 
             logging.info("saving transformed data")
@@ -201,8 +201,6 @@ class DataTransformation(BaseModel):
         except Exception as e:
             logging.error(f"Exception occured {e}")
             raise e
-
-
 
 
 class DataTransformationTwo(BaseModel):
@@ -271,9 +269,10 @@ class DataTransformationTwo(BaseModel):
             raise e
 
 
-
 class DataTransformationThree(BaseModel):
-    transformation_config: DataTransformationConfig_three = DataTransformationConfig_three()
+    transformation_config: DataTransformationConfig_three = (
+        DataTransformationConfig_three()
+    )
 
     def generate_transformer_third_data(
         self, numerical_features: List[str], strategie: str = "frequency", k: int = 5

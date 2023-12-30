@@ -423,6 +423,3 @@ class DateTimeTransformer(BaseEstimator, TransformerMixin):
         processed_df = self._process(df)
 
         return processed_df
-
-
-

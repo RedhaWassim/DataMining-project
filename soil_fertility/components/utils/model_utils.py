@@ -3,15 +3,12 @@ from typing import Dict
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from soil_fertility.components.utils.metrics import (
-    calculate_metrics_per_class,
-    specificite_per_class,
-    accuracy,
-    recall,
-    precision,
-    f1_score,
-    specificite,
-    confusion_matrix,
+    precision_recall_f1,
+    specificity,
+    micro_average,
+    macro_average,
 )
+import numpy as np
 
 
 def evaluate_model(
@@ -23,38 +20,48 @@ def evaluate_model(
 ) -> Dict[str, object]:
     try:
         report = {"metrics": {}}  # Initialize the report with a metrics dictionary
-        classes = list(set(y_test))
+        classes = np.unique(y_test)
 
         for model_name, model in models.items():
             # Fit the model
             model.fit(X_train.to_numpy(), y_train.to_numpy())
             y_test_pred = model.predict(X_test.to_numpy())
 
-            # Calculate scores
-            metrics_per_class = calculate_metrics_per_class(
+            # Calculate scores for each class
+            metrics_per_class = {}
+            for class_label in classes:
+                prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
+                spec = specificity(y_test, y_test_pred, class_label)
+                metrics_per_class[class_label] = {
+                    "precision": prec,
+                    "recall": rec,
+                    "f1_score": f1,
+                    "specificity": spec,
+                }
+
+            # Calculate micro and macro averages
+            micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
             )
-            specificity_per_class_scores = specificite_per_class(
+
+            macro_precision, macro_recall, macro_f1 = macro_average(
                 y_test, y_test_pred, classes
             )
-            test_accuracy = accuracy(y_test, y_test_pred)
-            rec = recall(y_test, y_test_pred)
-            prec = precision(y_test, y_test_pred)
-            f1 = f1_score(y_test, y_test_pred)
-            spec = specificite(y_test, y_test_pred)
-            conf_mat = confusion_matrix(y_test, y_test_pred)
 
             # Store the model and its metrics
             report[model_name] = model
             report["metrics"][model_name] = {
-                "accuracy": test_accuracy,
-                "confusion_matrix": conf_mat,
-                "recall": rec,
-                "precision": prec,
-                "f1_score": f1,
-                "specificite": spec,
+                "micro_average": {
+                    "precision": micro_precision,
+                    "recall": micro_recall,
+                    "f1_score": micro_f1,
+                },
+                "macro_average": {
+                    "precision": macro_precision,
+                    "recall": macro_recall,
+                    "f1_score": macro_f1,
+                },
                 "metrics_per_class": metrics_per_class,
-                "specificity_per_class": specificity_per_class_scores,
             }
 
         return report
@@ -63,7 +70,7 @@ def evaluate_model(
         raise
 
 
-def evaluate_model_gridseach(
+def evaluate_model_gridsearch(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     X_test: pd.DataFrame,
@@ -72,51 +79,54 @@ def evaluate_model_gridseach(
     params: Dict[str, list[int]],
 ) -> Dict[str, float]:
     try:
-        report = {}
-        classes = list(set(y_test))
-        report = {"metrics": {}}  # Initialize the report with a metrics dictionary
-        X_train = X_train.to_numpy()
-        y_train = y_train.to_numpy()
-        X_test = X_test.to_numpy()
-        y_test = y_test.to_numpy()
+        report = {"metrics": {}}
+        classes = np.unique(y_test)
 
-        for i in range(len(list(models))):
-            model = list(models.values())[i]
-            model_name = list(models.keys())[i]
-            para = params[list(models.keys())[i]]
-            grid_search = GridSearchCV(model, para, cv=5, scoring="accuracy")
-            grid_search.fit(X_train, y_train)
+        for model_name, model in models.items():
+            grid_search = GridSearchCV(
+                model, params[model_name], cv=5, scoring="accuracy"
+            )
+            grid_search.fit(X_train.to_numpy(), y_train.to_numpy())
+            y_test_pred = grid_search.predict(X_test.to_numpy())
 
-            y_test_pred = grid_search.predict(X_test)
+            # Calculate scores for each class
+            metrics_per_class = {}
+            for class_label in classes:
+                prec, rec, f1 = precision_recall_f1(y_test, y_test_pred, class_label)
+                spec = specificity(y_test, y_test_pred, class_label)
+                metrics_per_class[class_label] = {
+                    "precision": prec,
+                    "recall": rec,
+                    "f1_score": f1,
+                    "specificity": spec,
+                }
 
-            # Calculate scores
-            metrics_per_class = calculate_metrics_per_class(
+            # Calculate micro and macro averages
+            micro_precision, micro_recall, micro_f1 = micro_average(
                 y_test, y_test_pred, classes
             )
-            specificity_per_class_scores = specificite_per_class(
+
+            macro_precision, macro_recall, macro_f1 = macro_average(
                 y_test, y_test_pred, classes
             )
-            test_accuracy = accuracy(y_test, y_test_pred)
-            rec = recall(y_test, y_test_pred)
-            prec = precision(y_test, y_test_pred)
-            f1 = f1_score(y_test, y_test_pred)
-            spec = specificite(y_test, y_test_pred)
-            conf_mat = confusion_matrix(y_test, y_test_pred)
 
             # Store the model and its metrics
-            report[str(model_name) + "_gridsearch"] = grid_search
-            report["metrics"][str(model_name) + "_gridsearch"] = {
-                "accuracy": test_accuracy,
-                "confusion_matrix": conf_mat,
-                "recall": rec,
-                "precision": prec,
-                "f1_score": f1,
-                "specificite": spec,
+            report[model_name + "_gridsearch"] = grid_search
+            report["metrics"][model_name] = {
+                "micro_average": {
+                    "precision": micro_precision,
+                    "recall": micro_recall,
+                    "f1_score": micro_f1,
+                },
+                "macro_average": {
+                    "precision": macro_precision,
+                    "recall": macro_recall,
+                    "f1_score": macro_f1,
+                },
                 "metrics_per_class": metrics_per_class,
-                "specificity_per_class": specificity_per_class_scores,
             }
-        return report
 
+        return report
     except Exception as e:
-        logging.error(f"Exception occured {e}")
+        logging.error(f"Exception occurred {e}")
         raise e

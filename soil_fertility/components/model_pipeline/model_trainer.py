@@ -6,7 +6,7 @@ from pathlib import Path
 from soil_fertility.utils import retreive_base_path, save_object
 from soil_fertility.components.utils.model_utils import (
     evaluate_model,
-    evaluate_model_gridseach,
+    evaluate_model_gridsearch,
 )
 from soil_fertility.components.model_pipeline.models.KNN import KNN
 from typing import Dict
@@ -25,7 +25,12 @@ class ModelTrainer:
         self.model_config = ModelConfig()
 
     def init_training(
-        self, train_data, test_data, target_column, mode: str = "default", save_model: bool = False
+        self,
+        train_data,
+        test_data,
+        target_column,
+        mode: str = "default",
+        save_model: bool = False,
     ):
         try:
             logging.info("Splitting train and test data")
@@ -51,7 +56,7 @@ class ModelTrainer:
                 )
 
             elif mode == "gridsearch":
-                model_report: dict = evaluate_model_gridseach(
+                model_report: dict = evaluate_model_gridsearch(
                     X_train, y_train, X_test, y_test, models, params=yaml_params
                 )
 
@@ -80,7 +85,6 @@ class ModelTrainer:
             if save_model:
                 self.save_model(model_report)
 
-
             return model_report
 
         except Exception as e:
@@ -91,7 +95,7 @@ class ModelTrainer:
         for model_name, model in model_report.items():
             if model_name == "metrics":
                 continue
-        
+
             save_object(
                 file_path=Path(
                     self.model_config.base_path,

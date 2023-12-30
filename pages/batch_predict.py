@@ -12,11 +12,8 @@ from soil_fertility.components.model_pipeline.models.apriori import MyApriori
 from typing import List
 import os
 
-
 st.title(" :bar_chart: Model GUI")
 
-
-# ... (rest
 base_path = retreive_base_path()
 
 classifier_name = st.sidebar.selectbox(
@@ -102,58 +99,19 @@ else:
 
     col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        N = st.number_input("Enter a value for N")
-        P = st.number_input("Enter a value for P")
-        K = st.number_input("Enter a value for K")
-
-    with col2:
-        pH = st.number_input("Enter a value for pH")
-        EC = st.number_input("Enter a value for EC")
-        OC = st.number_input("Enter a value for OC")
-
-    with col3:
-        S = st.number_input("Enter a value for S")
-        Zn = st.number_input("Enter a value for Zn")
-        Fe = st.number_input("Enter a value for Fe")
-    with col4:
-        Cu = st.number_input("Enter a value for Cu")
-        Mn = st.number_input("Enter a value for Mn")
-        B = st.number_input("Enter a value for B")
-
-    OM = st.number_input("Enter a value for OM")
-
     reference_data = pd.read_csv(
-        os.path.join(base_path, "artifacts/intermediate/1/", "train.csv")
+        os.path.join(base_path, "artifacts/raw/1", "train.csv")
     )
     selected_feature = st.sidebar.selectbox(
         "Select Feature for Analysis",
         reference_data.columns,
     )
 
-    def predict_one(model_name):
-        data = InputData(
-            N=N,
-            P=P,
-            K=K,
-            pH=pH,
-            EC=EC,
-            OC=OC,
-            S=S,
-            Zn=Zn,
-            Fe=Fe,
-            Cu=Cu,
-            Mn=Mn,
-            B=B,
-            OM=OM,
-        )
-        df = data.get_data_as_df()
+    def predict_dataset(model_name, df):
         pipeline = PredictPipeline()
         prediction, drift_value, drift_results = pipeline.predict(
             df, model_name, drift=True
         )
-
-        st.write(f"Prediction : {prediction}")
 
         if st.button("drift"):
             if drift_value:
@@ -163,16 +121,23 @@ else:
             else:
                 st.write("No drift detected")
 
-        st.subheader("train data")
-        fig_hist = px.histogram(
-            reference_data, x=selected_feature, marginal="box", nbins=30
-        )
-        fig_hist.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-        st.plotly_chart(fig_hist, use_container_width=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("train data")
+            fig_hist = px.histogram(
+                reference_data, x=selected_feature, marginal="box", nbins=30
+            )
+            fig_hist.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+            st.plotly_chart(fig_hist, use_container_width=True)
 
-        st.subheader("test data")
-        fig_hist = px.histogram(df, x=selected_feature, marginal="box", nbins=30)
-        fig_hist.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-        st.plotly_chart(fig_hist, use_container_width=True)
+        with col2:
+            st.subheader("test data")
+            fig_hist = px.histogram(df, x=selected_feature, marginal="box", nbins=30)
+            fig_hist.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+            st.plotly_chart(fig_hist, use_container_width=True)
 
-    st.button("Predict", on_click=predict_one(model_name))
+    data = st.file_uploader("upload file")
+    if data is not None:
+        df = pd.read_csv(data)
+        st.write(df)
+        st.button("Predict", on_click=predict_dataset(model_name, df))
