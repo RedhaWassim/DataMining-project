@@ -17,15 +17,18 @@ from soil_fertility.components.utils.transformations import (
     EqualWidthDescritizer,
     EqualFreqDescritizer,
     DateTimeTransformer,
+    MeanImputer,
 )
 
 
 class GeneralProcessing(BaseModel):
+    base_path: str = retreive_base_path()
     def generate_transformer(self):
         all_features_pipeline = Pipeline(
             [
                 ("drop_missing_values", DropMissingValues()),
                 ("drop_duplicates", DropDuplicates()),
+                ("mean_imputer", MeanImputer()),
             ]
         )
         return all_features_pipeline
@@ -38,9 +41,9 @@ class GeneralProcessing(BaseModel):
             processed_data = all_features_pipeline.fit_transform(data)
 
             logging.info("general processing completed")
-
+            path = f'{self.base_path}/artifacts/preprocessors/all_features_pipeline.pkl'
             save_object(
-                r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/all_features_pipeline.pkl",
+                path,
                 all_features_pipeline,
             )
 
@@ -54,6 +57,7 @@ class GeneralProcessing(BaseModel):
 class DataTransformationConfig_one(PathConfig):
     def __init__(self):
         super().__init__()
+        self.base_path: str = retreive_base_path()
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
         self.update_path()
 
@@ -61,6 +65,7 @@ class DataTransformationConfig_one(PathConfig):
 class DataTransformationConfig_two(PathConfig):
     def __init__(self):
         super().__init__()
+        self.base_path: str = retreive_base_path()
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
         self.part = 2
 
@@ -70,6 +75,7 @@ class DataTransformationConfig_two(PathConfig):
 class DataTransformationConfig_three(PathConfig):
     def __init__(self):
         super().__init__()
+        self.base_path: str = retreive_base_path()
         self.path_type: Literal["raw", "intermediate", "processed"] = "intermediate"
         self.part = 3
         self.update_path()
@@ -190,10 +196,11 @@ class DataTransformation(BaseModel):
 
             self.transformation_config.part += 1
             self.transformation_config.update_path()
+            path = f'{self.base_path}/artifacts/preprocessors/preprocessor_first.pkl'
 
             logging.info("data transformation completed")
             save_object(
-                r"/home/redha/Documents/projects/NLP/datamining project/Soil-Fertility/artifacts/preprocessors/preprocessor_first.pkl",
+                path,
                 preprocessors,
             )
 

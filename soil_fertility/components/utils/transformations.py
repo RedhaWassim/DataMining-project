@@ -185,6 +185,85 @@ class CustomImputer(BaseEstimator, TransformerMixin):
         pass
 
 
+
+class MeanImputer(BaseEstimator, TransformerMixin):
+    def __init__(self, stabelize: bool = False, show: bool = False) -> None:
+        self.stabelize = stabelize
+        self.show = show
+
+    def _tendencies(self, df: pd.DataFrame) -> CalculateTendencies:
+        self.tendencies = CalculateTendencies(df)
+
+    def _find_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Remplace les valeurs aberrantes dans un DataFrame en utilisant la méthode IQR.
+
+        Args:
+            df (pd.DataFrame): le dataset pour le traitement des valeurs aberrantes
+
+        Returns:
+            pd.DataFrame: le dataset avec les valeurs aberrantes remplacées par la moyenne
+        """
+        new_df = df.copy()
+        self._tendencies(new_df)
+
+        quartiles_dict = self.tendencies.quartiles(percentiles=[0, 0.25, 0.5, 0.75, 1])
+
+        for col in new_df.columns:
+            if (
+                df[col].dtype == "datetime64[ns]"
+                or df[col].dtype == "object"
+                or df[col].dtype == "string"
+            ):
+                continue
+            q1, q3 = quartiles_dict[col][1], quartiles_dict[col][3]
+            iqr = q3 - q1
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            mean_value = new_df[col].mean()
+
+            if self.show:
+                print(
+                    f"Colonne {col} : borne inférieure = {lower_bound}, borne supérieure = {upper_bound}"
+                )
+                print(
+                    f"Valeurs aberrantes : {new_df[(new_df[col] < lower_bound) | (new_df[col] > upper_bound)][col]}"
+                )
+
+            new_df[col] = new_df[col].apply(lambda x: mean_value if x < lower_bound or x > upper_bound else x)
+
+        return new_df
+
+    def drop_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """drop outliers until data stabilizes
+
+        Args:
+            df (pd.DataFrame): the dataframe to drop outliers from
+
+        Returns:
+            pd.DataFrame: the dataframe without outliers
+        """
+        new_df = df.copy()
+        if self.stabelize:
+            while True:
+                df_without_outliers = self._find_outliers(new_df)
+                if len(df_without_outliers) == len(new_df):
+                    return df_without_outliers
+                new_df = df_without_outliers
+
+        else:
+            df_without_outliers = self._find_outliers(new_df)
+            return df_without_outliers
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return self.drop_outliers(X)
+
+    def get_feature_names_out(self):
+        pass
+
+
 class MinMaxTransformation(BaseEstimator, TransformerMixin):
     def _tendencies(self, df: pd.DataFrame) -> CalculateTendencies:
         self.tendencies = CalculateTendencies(df)
