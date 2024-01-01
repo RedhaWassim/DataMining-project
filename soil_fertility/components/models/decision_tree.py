@@ -5,7 +5,7 @@ class DecisionTree:
     def __init__(self, max_depth=None):
         self.max_depth = max_depth
         self.tree = None
-
+ 
     def fit(self, X, y, feature_names=None):
         self.feature_names = feature_names
         self.tree = self._build_tree(X, y, depth=0)

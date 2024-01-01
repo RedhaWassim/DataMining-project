@@ -17,7 +17,7 @@ class RandomForest:
             indices = np.random.choice(X.shape[0], X.shape[0], replace=True)
             X_bootstrap = X[indices, :]
             y_bootstrap = y[indices]
-
+ 
             # Randomly select a subset of features if max_features is specified
             if self.max_features is not None:
                 selected_features = np.random.choice(
