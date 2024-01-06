@@ -1,6 +1,6 @@
 decision_tree:
-  max_depth: [10,20]
+  max_depth: [10,12,14,16,18,20,30,40]
 
 random_forest:
-  max_depth: [10]
-  n_trees: [10]
+  max_depth: [10,12,14,16,18,20,30,40]
+  n_trees: [10,12,14,16,18,20,30]
